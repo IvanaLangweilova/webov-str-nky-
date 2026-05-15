@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>ILang – interaktivní výukové aplikace</title>
+
+  <meta name="description" content="ILang – interaktivní výukové aplikace pro žáky základních škol. Převody jednotek, fyzika, matematika, simulace a názorné výpočty." />
+
+  <style>
+    :root{
+      --bg1:#dbeafe;
+      --bg2:#dcfce7;
+      --bg3:#fef3c7;
+      --dark:#0f172a;
+      --muted:#475569;
+      --card:#ffffff;
+      --line:#dbeafe;
+      --blue:#0284c7;
+      --green:#16a34a;
+      --orange:#ea580c;
+      --pink:#db2777;
+      --purple:#7c3aed;
+      --shadow:0 18px 40px rgba(15,23,42,.12);
+    }
+
+    *{
+      box-sizing:border-box;
+    }
+
+    html{
+      scroll-behavior:smooth;
+    }
+
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:Arial, Helvetica, sans-serif;
+      color:var(--dark);
+      background:
+        radial-gradient(circle at top left, rgba(56,189,248,.25), transparent 34%),
+        radial-gradient(circle at top right, rgba(34,197,94,.22), transparent 30%),
+        linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));
+    }
+
+    .page{
+      max-width:1320px;
+      margin:0 auto;
+      padding:24px;
+    }
+
+    header{
+      background:rgba(255,255,255,.94);
+      border:2px solid rgba(255,255,255,.96);
+      border-radius:32px;
+      box-shadow:var(--shadow);
+      padding:28px;
+      margin-bottom:22px;
+      overflow:hidden;
+      position:relative;
+    }
+
+    header::after{
+      content:"";
+      position:absolute;
+      width:260px;
+      height:260px;
+      border-radius:50%;
+      background:rgba(14,165,233,.12);
+      right:-90px;
+      top:-80px;
+      pointer-events:none;
+    }
+
+    .hero{
+      display:grid;
+      grid-template-columns:150px 1fr;
+      gap:24px;
+      align-items:center;
+      position:relative;
+      z-index:1;
+    }
+
+    .logoBox{
+      width:150px;
+      height:150px;
+      border-radius:32px;
+      background:white;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow:0 12px 28px rgba(15,23,42,.12);
+      border:1px solid #e2e8f0;
+      overflow:hidden;
+      padding:10px;
+    }
+
+    .logoBox img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      display:block;
+    }
+
+    .heroText h1{
+      margin:0 0 10px;
+      font-size:44px;
+      letter-spacing:.5px;
+      color:#075985;
+    }
+
+    .heroText .lead{
+      margin:0;
+      font-size:19px;
+      line-height:1.65;
+      color:var(--muted);
+      max-width:980px;
+    }
+
+    .authorLine{
+      margin-top:16px;
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      gap:10px;
+      font-size:15px;
+      color:#334155;
+      font-weight:bold;
+    }
+
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:8px 12px;
+      border-radius:999px;
+      background:#eff6ff;
+      border:1px solid #bfdbfe;
+      color:#075985;
+      font-size:14px;
+      font-weight:bold;
+    }
+
+    .introGrid{
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      gap:16px;
+      margin-bottom:22px;
+    }
+
+    .introCard{
+      background:rgba(255,255,255,.92);
+      border:1px solid rgba(255,255,255,.9);
+      border-radius:24px;
+      padding:18px;
+      box-shadow:0 12px 28px rgba(15,23,42,.08);
+      line-height:1.55;
+      color:#475569;
+    }
+
+    .introCard strong{
+      display:block;
+      color:#0f172a;
+      font-size:18px;
+      margin-bottom:6px;
+    }
+
+    .sectionHead{
+      margin:28px 0 16px;
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:flex-end;
+      flex-wrap:wrap;
+    }
+
+    .sectionHead h2{
+      margin:0;
+      font-size:30px;
+      color:#0f172a;
+    }
+
+    .sectionHead p{
+      margin:0;
+      color:#64748b;
+      font-size:15px;
+    }
+
+    .appsGrid{
+      display:grid;
+      grid-template-columns:repeat(4, minmax(0,1fr));
+      gap:18px;
+    }
+
+    .appCard{
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      min-height:260px;
+      text-decoration:none;
+      background:rgba(255,255,255,.95);
+      border:1px solid rgba(255,255,255,.95);
+      border-radius:28px;
+      padding:20px;
+      box-shadow:0 14px 32px rgba(15,23,42,.10);
+      color:var(--dark);
+      overflow:hidden;
+      transition:.22s ease;
+    }
+
+    .appCard:hover{
+      transform:translateY(-5px);
+      box-shadow:0 20px 42px rgba(15,23,42,.16);
+    }
+
+    .appCard::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      opacity:.12;
+      background:var(--accent);
+      pointer-events:none;
+    }
+
+    .appIcon{
+      width:62px;
+      height:62px;
+      border-radius:22px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:34px;
+      background:var(--accentSoft);
+      color:var(--accent);
+      margin-bottom:15px;
+      position:relative;
+      z-index:1;
+      border:1px solid rgba(255,255,255,.7);
+    }
+
+    .appCard h3{
+      margin:0 0 8px;
+      font-size:22px;
+      color:#0f172a;
+      position:relative;
+      z-index:1;
+    }
+
+    .appCard p{
+      margin:0;
+      line-height:1.52;
+      color:#475569;
+      font-size:15px;
+      position:relative;
+      z-index:1;
+      flex:1;
+    }
+
+    .openBtn{
+      margin-top:18px;
+      display:inline-flex;
+      width:fit-content;
+      align-items:center;
+      gap:8px;
+      border-radius:999px;
+      padding:10px 14px;
+      background:var(--accent);
+      color:white;
+      font-size:14px;
+      font-weight:bold;
+      position:relative;
+      z-index:1;
+    }
+
+    .addCard{
+      border:2px dashed #93c5fd;
+      background:rgba(239,246,255,.86);
+    }
+
+    .addCard::before{
+      opacity:.05;
+    }
+
+    .footer{
+      margin-top:28px;
+      background:rgba(255,255,255,.93);
+      border-radius:28px;
+      padding:20px 22px;
+      box-shadow:0 12px 28px rgba(15,23,42,.08);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      flex-wrap:wrap;
+      border:1px solid rgba(255,255,255,.9);
+    }
+
+    .footerBrand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      color:#334155;
+      font-weight:bold;
+    }
+
+    .footerBrand img{
+      width:52px;
+      height:52px;
+      object-fit:contain;
+      background:white;
+      border-radius:14px;
+      border:1px solid #e2e8f0;
+      padding:4px;
+    }
+
+    .visitorCounter{
+      position:fixed;
+      right:14px;
+      bottom:14px;
+      z-index:50;
+      background:rgba(255,255,255,.96);
+      border:1px solid #cbd5e1;
+      border-radius:999px;
+      box-shadow:0 10px 28px rgba(15,23,42,.16);
+      padding:8px 12px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:13px;
+      color:#334155;
+      font-weight:bold;
+    }
+
+    .visitorCounter img{
+      height:20px;
+      display:block;
+    }
+
+    .counterNote{
+      font-size:12px;
+      color:#64748b;
+      margin-top:6px;
+      line-height:1.4;
+    }
+
+    @media (max-width:1100px){
+      .appsGrid{
+        grid-template-columns:repeat(3, minmax(0,1fr));
+      }
+      .introGrid{
+        grid-template-columns:1fr;
+      }
+    }
+
+    @media (max-width:820px){
+      .page{
+        padding:16px;
+      }
+
+      .hero{
+        grid-template-columns:1fr;
+        text-align:center;
+        justify-items:center;
+      }
+
+      .heroText h1{
+        font-size:34px;
+      }
+
+      .heroText .lead{
+        font-size:17px;
+      }
+
+      .authorLine{
+        justify-content:center;
+      }
+
+      .appsGrid{
+        grid-template-columns:1fr;
+      }
+
+      .appCard{
+        min-height:auto;
+      }
+
+      .visitorCounter{
+        position:static;
+        width:fit-content;
+        margin:18px auto 0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <header>
+      <div class="hero">
+        <div class="logoBox">
+          <img src="assets/logo-ilang.png" alt="Logo ILang" />
+        </div>
+
+        <div class="heroText">
+          <h1>ILang – interaktivní výukové aplikace</h1>
+          <p class="lead">
+            Tyto stránky slouží jako rozcestník interaktivních webových aplikací pro výuku fyziky,
+            matematiky a převodů jednotek na základní škole. Aplikace pomáhají žákům názorně pochopit učivo
+            pomocí výpočtů, převodů, simulací a jednoduchých vizualizací.
+          </p>
+
+          <div class="authorLine">
+            <span class="tag">👩‍🏫 Autorka: Mgr. Ivana Langweilová</span>
+            <span class="tag">🦉 ILang</span>
+            <span class="tag">📚 Pro žáky, učitele i rodiče</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section class="introGrid" aria-label="Popis webu">
+      <div class="introCard">
+        <strong>K čemu web slouží?</strong>
+        Web shromažďuje výukové aplikace, které žákům ukazují učivo názorně a interaktivně.
+        Žáci mohou měnit hodnoty, sledovat výsledek a lépe pochopit souvislosti.
+      </div>
+
+      <div class="introCard">
+        <strong>Pro koho je určen?</strong>
+        Pro žáky základních škol, učitele, asistenty pedagoga, rodiče i všechny, kteří chtějí učivo
+        vysvětlit jednoduše, přehledně a prakticky.
+      </div>
+
+      <div class="introCard">
+        <strong>Jak se bude rozšiřovat?</strong>
+        Každá nová aplikace se přidá jako další kartička. Později zde mohou být například tlak,
+        páka, energie, elektrický obvod, měřítko mapy nebo brzdná dráha.
+      </div>
+    </section>
+
+    <section>
+      <div class="sectionHead">
+        <div>
+          <h2>Výukové aplikace</h2>
+          <p>Kliknutím na kartičku otevřeš konkrétní aplikaci.</p>
+        </div>
+      </div>
+
+      <div class="appsGrid">
+        <a class="appCard" href="hmotnost/index.html" style="--accent:#2563eb;--accentSoft:#dbeafe;">
+          <div class="appIcon">⚖️</div>
+          <h3>Hmotnost</h3>
+          <p>Převody jednotek hmotnosti: kilogram, gram, dekagram, tuna a další jednotky v přehledné podobě.</p>
+          <span class="openBtn">Otevřít aplikaci →</span>
+        </a>
+
+        <a class="appCard" href="delka/index.html" style="--accent:#0891b2;--accentSoft:#cffafe;">
+          <div class="appIcon">📏</div>
+          <h3>Délka</h3>
+          <p>Převody jednotek délky, práce s metry, centimetry, kilometry a dalšími jednotkami.</p>
+          <span class="openBtn">Otevřít aplikaci →</span>
+        </a>
+
+        <a class="appCard" href="plocha/index.html" style="--accent:#16a34a;--accentSoft:#dcfce7;">
+          <div class="appIcon">▧</div>
+          <h3>Plocha</h3>
+          <p>Výpočty obsahů obrazců, vzorce, převody jednotek plochy a názorné geometrické ukázky.</p>
+          <span class="openBtn">Otevřít aplikaci →</span>
+        </a>
+
+        <a class="appCard" href="objem/index.html" style="--accent:#ea580c;--accentSoft:#ffedd5;">
+          <div class="appIcon">🧊</div>
+          <h3>Objem</h3>
+          <p>Výpočty objemů těles, litry, cm³, m³ a názorné ukázky nádob a geometrických těles.</p>
+          <span class="openBtn">Otevřít aplikaci →</span>
+        </a>
+
+        <a class="appCard" href="rychlost/index.html" style="--accent:#dc2626;--accentSoft:#fee2e2;">
+          <div class="appIcon">🚗</div>
+          <h3>Rychlost</h3>
+          <p>Výpočty rychlosti, dráhy a času. Simulace aut, lodí a setkání dvou pohybujících se těles.</p>
+          <span class="openBtn">Otevřít aplikaci →</span>
+        </a>
+
+        <a class="appCard" href="cas/index.html" style="--accent:#7c3aed;--accentSoft:#ede9fe;">
+          <div class="appIcon">🕒</div>
+          <h3>Čas</h3>
+          <p>Analogové a digitální hodiny, převody času a procvičování čtení času na hodinách.</p>
+          <span class="openBtn">Otevřít aplikaci →</span>
+        </a>
+
+        <a class="appCard" href="teplota/index.html" style="--accent:#db2777;--accentSoft:#fce7f3;">
+          <div class="appIcon">🌡️</div>
+          <h3>Teplota</h3>
+          <p>Teploměr, digitální měření, převody °C, °F a K, bod varu vody a tělesná teplota člověka.</p>
+          <span class="openBtn">Otevřít aplikaci →</span>
+        </a>
+
+        <a class="appCard" href="hustota/index.html" style="--accent:#0f766e;--accentSoft:#ccfbf1;">
+          <div class="appIcon">💧</div>
+          <h3>Hustota</h3>
+          <p>Výpočet hustoty, porovnání látek a simulace plování těles v různých kapalinách.</p>
+          <span class="openBtn">Otevřít aplikaci →</span>
+        </a>
+
+        <a class="appCard addCard" href="#" style="--accent:#64748b;--accentSoft:#f1f5f9;" onclick="alert('Tady může být později další výuková aplikace.'); return false;">
+          <div class="appIcon">＋</div>
+          <h3>Další aplikace</h3>
+          <p>Tento web je připravený na rozšiřování. Později sem půjde přidat tlak, páku, energii nebo další témata.</p>
+          <span class="openBtn">Připraveno k doplnění</span>
+        </a>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="footerBrand">
+        <img src="assets/logo-ilang.png" alt="Logo ILang" />
+        <div>
+          © Mgr. Ivana Langweilová – ILang<br>
+          <span style="font-weight:normal;color:#64748b;">Interaktivní výukové aplikace pro základní školu</span>
+        </div>
+      </div>
+
+      <div>
+        <strong>Jak přidat další aplikaci?</strong><br>
+        <span style="color:#64748b;">Vytvoř novou složku, například <strong>tlak/index.html</strong>, a přidej novou kartičku na hlavní stránku.</span>
+        <div class="counterNote">
+          Počítadlo návštěv funguje přes externí službu. Po nahrání na GitHub lze upravit adresu webu v odkazu počítadla.
+        </div>
+      </div>
+    </footer>
+
+    <div class="visitorCounter" title="Počítadlo návštěv">
+      <span>👁️ Návštěvy</span>
+      <img
+        alt="Počítadlo návštěv"
+        src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Filang-vyukove-aplikace.github.io&count_bg=%230284C7&title_bg=%230F172A&icon=&icon_color=%23E7E7E7&title=web&edge_flat=false"
+      />
+    </div>
+  </div>
+</body>
+</html>
