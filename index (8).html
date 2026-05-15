@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hustota – výpočet, kapaliny a plování těles</title>
+  <style>
+    :root{
+      --bg1:#dbeafe; --bg2:#dcfce7; --bg3:#fef3c7;
+      --dark:#0f172a; --muted:#475569; --line:#cbd5e1;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; min-height:100vh; font-family:Arial, Helvetica, sans-serif;
+      background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));
+      color:var(--dark);
+    }
+    .page{max-width:1450px;margin:0 auto;padding:24px}
+    header{
+      background:rgba(255,255,255,.95); border-radius:28px; padding:28px;
+      text-align:center; margin-bottom:22px; box-shadow:0 18px 40px rgba(15,23,42,.12);
+      border:2px solid rgba(255,255,255,.95);
+    }
+    h1{margin:0 0 10px;font-size:42px;color:#0284c7;letter-spacing:1px}
+    .subtitle{font-size:18px;line-height:1.6;color:var(--muted);max-width:1120px;margin:0 auto}
+    .author{margin-top:14px;font-size:15px;color:#334155;font-weight:bold}
+    .grid{display:grid;grid-template-columns:1fr 1.15fr;gap:22px;align-items:start}
+    .card{
+      background:rgba(255,255,255,.95); border-radius:26px; padding:22px;
+      box-shadow:0 18px 35px rgba(15,23,42,.10); border:1px solid rgba(255,255,255,.9);
+    }
+    .card h2{margin:0 0 16px;font-size:25px;color:#0f172a}
+    .scene-wrap{background:linear-gradient(180deg,#eff6ff,#ecfeff);border:3px solid #7dd3fc;border-radius:22px;padding:18px;margin-bottom:18px}
+    .scene-title{text-align:center;font-weight:bold;font-size:20px;color:#0c4a6e;margin-bottom:12px}
+    .tank-layout{display:grid;grid-template-columns:310px 1fr;gap:18px;align-items:start}
+    .tank-box{background:white;border:2px solid #bae6fd;border-radius:22px;padding:16px;display:flex;justify-content:center;align-items:center;min-height:470px}
+    .tank{
+      position:relative;width:230px;height:370px;border:5px solid #475569;border-top:8px solid #475569;border-bottom:8px solid #475569;
+      border-radius:16px 16px 12px 12px;background:linear-gradient(180deg,#e0f2fe 0%,#7dd3fc 18%,#38bdf8 100%);
+      overflow:hidden;box-shadow:inset 0 0 25px rgba(255,255,255,.25);
+    }
+    .liquidFill{position:absolute;left:0;right:0;top:58px;bottom:40px;background:#38bdf8;opacity:.82;z-index:1}
+    .water-label{
+      position:absolute;top:18px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.92);color:#0f172a;
+      padding:6px 10px;border-radius:999px;font-size:13px;font-weight:bold;border:1px solid #bae6fd;z-index:6;white-space:nowrap;
+    }
+    .waterline{position:absolute;top:58px;left:0;width:100%;height:4px;background:rgba(255,255,255,.85);box-shadow:0 0 8px rgba(255,255,255,.7);z-index:5}
+    .bottom-sand{position:absolute;left:0;bottom:0;width:100%;height:42px;background:linear-gradient(180deg,#fde68a,#eab308);z-index:2}
+    .object{
+      position:absolute;left:50%;transform:translateX(-50%);width:84px;height:84px;border-radius:16px;background:#f97316;
+      border:4px solid rgba(15,23,42,.35);transition:top .8s ease,background .4s ease,border-radius .3s ease;
+      display:flex;align-items:center;justify-content:center;text-align:center;font-size:13px;font-weight:bold;color:#0f172a;
+      padding:6px;box-shadow:0 8px 20px rgba(15,23,42,.18);z-index:4;
+    }
+    .obj-shadow{position:absolute;bottom:38px;left:50%;transform:translateX(-50%);width:90px;height:14px;border-radius:50%;background:rgba(15,23,42,.15);filter:blur(3px);transition:opacity .8s ease;opacity:0;z-index:3}
+    .bubble{position:absolute;bottom:44px;width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.8);animation:rise 5s linear infinite;z-index:3}
+    .bubble:nth-child(1){left:35px;animation-delay:0s}.bubble:nth-child(2){left:75px;width:12px;height:12px;animation-delay:1s}.bubble:nth-child(3){left:155px;width:8px;height:8px;animation-delay:2.2s}.bubble:nth-child(4){left:185px;width:11px;height:11px;animation-delay:3.4s}
+    @keyframes rise{0%{transform:translateY(0);opacity:0}20%{opacity:.85}100%{transform:translateY(-250px);opacity:0}}
+    .sim-info{min-height:470px;background:linear-gradient(180deg,#f0f9ff,#fefce8);border:2px solid #bae6fd;border-radius:22px;padding:18px}
+    .info-title{text-align:center;font-size:24px;font-weight:bold;color:#0f766e;margin-bottom:8px}
+    .info-desc{font-size:16px;line-height:1.55;color:#475569;text-align:center;margin-bottom:14px}
+    .status-badge{display:block;width:fit-content;margin:0 auto 16px;padding:10px 18px;border-radius:999px;background:#e0f2fe;color:#075985;border:1px solid #7dd3fc;font-weight:bold;font-size:15px}
+    .display{background:#020617;color:#22c55e;border-radius:18px;padding:18px;text-align:center;font-size:24px;font-weight:bold;letter-spacing:.5px;box-shadow:inset 0 0 20px rgba(34,197,94,.22);margin:14px 0 18px;min-height:68px}
+    .mini-cards{display:grid;grid-template-columns:1fr;gap:10px}.mini-card{background:white;border:1px solid #dbeafe;border-radius:16px;padding:12px;line-height:1.5;font-size:15px}
+    label{display:block;font-weight:bold;margin-bottom:7px;font-size:15px}
+    input,select{width:100%;padding:13px 15px;border-radius:14px;border:2px solid var(--line);font-size:17px;background:#fff;outline:none}
+    input:focus,select:focus{border-color:#0284c7;box-shadow:0 0 0 4px rgba(2,132,199,.12)}
+    input[type=range]{padding:0;border:none;box-shadow:none}
+    .mode-box{background:#f8fafc;border:1px solid #e2e8f0;padding:15px;border-radius:18px;margin-bottom:16px}
+    .input-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+    .slider-card{margin-top:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:18px;padding:14px}
+    .slider-label{display:flex;justify-content:space-between;gap:12px;margin-bottom:6px;font-weight:bold;color:#0c4a6e}
+    .hint{color:var(--muted);font-size:14px;line-height:1.5;margin-top:8px}
+    .quick{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+    button{border:none;border-radius:999px;padding:10px 14px;font-size:15px;font-weight:bold;cursor:pointer;background:#e0f2fe;color:#075985;transition:.2s}
+    button:hover{transform:translateY(-1px);background:#bae6fd}
+    .multi-wrap{margin-top:18px;background:linear-gradient(180deg,#f0f9ff,#ecfeff);border:3px solid #7dd3fc;border-radius:22px;padding:18px}
+    .multi-title{text-align:center;font-size:20px;font-weight:bold;color:#0c4a6e;margin-bottom:12px}
+    .multi-layout{display:grid;grid-template-columns:330px 1fr;gap:18px;align-items:start}
+    .multi-tank{position:relative;width:310px;height:360px;margin:0 auto;border:5px solid #475569;border-top:8px solid #475569;border-bottom:8px solid #475569;border-radius:16px 16px 12px 12px;background:linear-gradient(180deg,#e0f2fe 0%,#7dd3fc 18%,#38bdf8 100%);overflow:hidden;box-shadow:inset 0 0 25px rgba(255,255,255,.25)}
+    .multi-liquid{position:absolute;left:0;right:0;top:55px;bottom:40px;background:#38bdf8;opacity:.82;z-index:1}
+    .multi-object{position:absolute;width:52px;height:52px;border-radius:14px;border:3px solid rgba(15,23,42,.35);box-shadow:0 8px 18px rgba(15,23,42,.16);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;text-align:center;color:#0f172a;padding:3px;z-index:4;transition:top .6s ease}
+    .multi-waterline{position:absolute;top:55px;left:0;width:100%;height:4px;background:rgba(255,255,255,.8);z-index:3}.multi-sand{position:absolute;left:0;bottom:0;width:100%;height:40px;background:linear-gradient(180deg,#fde68a,#eab308);z-index:2}
+    .legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.legend-item{background:white;border:1px solid #dbeafe;border-radius:16px;padding:11px 12px;font-size:15px;line-height:1.45}.dot{display:inline-block;width:13px;height:13px;border-radius:4px;margin-right:6px;vertical-align:middle;border:1px solid rgba(15,23,42,.25)}
+    .results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .unit{border-radius:18px;padding:15px;color:white;min-height:110px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 10px 20px rgba(15,23,42,.12)}
+    .unit:nth-child(1){background:linear-gradient(135deg,#0284c7,#0369a1)}.unit:nth-child(2){background:linear-gradient(135deg,#0ea5e9,#2563eb)}.unit:nth-child(3){background:linear-gradient(135deg,#10b981,#059669)}.unit:nth-child(4){background:linear-gradient(135deg,#f59e0b,#d97706)}.unit:nth-child(5){background:linear-gradient(135deg,#8b5cf6,#7c3aed)}.unit:nth-child(6){background:linear-gradient(135deg,#ec4899,#db2777)}
+    .unit .top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.symbol{font-size:22px;font-weight:bold}.spoken{font-size:14px;opacity:.92;text-align:right}.value{font-size:20px;font-weight:bold;margin-top:12px;word-break:break-word}.full{font-size:13px;opacity:.95;margin-top:4px}
+    .answerBox{margin-top:18px;background:#ecfeff;border:2px solid #a5f3fc;border-radius:20px;padding:18px;font-size:16px;line-height:1.6}.answerBox strong{color:#0f766e}
+    .exampleBox{margin-top:16px;background:#fff7ed;border:2px solid #fed7aa;border-radius:20px;padding:18px;line-height:1.6;font-size:16px}
+    .formula{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:14px}.formula div{background:white;border:1px solid #fed7aa;border-radius:14px;padding:11px;text-align:center;font-weight:bold;color:#7c2d12}
+    .law{margin-top:14px;background:#eff6ff;border:2px solid #bfdbfe;border-radius:18px;padding:14px;font-size:15px;line-height:1.5}
+    .density-table{margin-top:12px;display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.density-item{background:white;border:1px solid #dbeafe;border-radius:14px;padding:10px 12px;font-size:15px}
+    .calc-box{margin-top:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:18px;padding:14px}
+    footer{text-align:center;margin-top:18px;color:#475569;font-size:14px}
+    @media(max-width:1100px){.grid{grid-template-columns:1fr}.tank-layout,.multi-layout{grid-template-columns:1fr}.results,.input-row,.formula,.density-table,.legend{grid-template-columns:1fr}h1{font-size:34px}.tank-box,.sim-info{min-height:auto}.multi-tank{width:100%;max-width:310px}}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <h1>HUSTOTA</h1>
+      <p class="subtitle">
+        Hustota říká, kolik hmoty je v určitém objemu látky nebo tělesa.
+        Díky hustotě zjistíme, proč některá tělesa plavou, jiná se v kapalině vznášejí
+        a jiná klesnou ke dnu.
+      </p>
+      <p class="subtitle" style="margin-top:10px;">
+        <strong>K čemu je to dobré?</strong> Hustotu využíváme ve fyzice, chemii,
+        při určování látek, při stavbě lodí, při práci s kapalinami i v běžném životě.
+      </p>
+      <div class="author">Autorka: Mgr. Ivana Langweilová</div>
+    </header>
+
+    <main class="grid">
+      <section class="card">
+        <h2>Simulace tělesa v kapalině</h2>
+
+        <div class="scene-wrap">
+          <div class="scene-title">SLEDUJ, ZDA TĚLESO PLAVE, VZNÁŠÍ SE, NEBO KLESÁ</div>
+
+          <div class="tank-layout">
+            <div class="tank-box">
+              <div class="tank">
+                <div class="liquidFill" id="liquidFill"></div>
+                <div class="water-label" id="liquidLabel">VODA – hustota 1 g/cm³</div>
+                <div class="waterline"></div>
+                <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+                <div class="obj-shadow" id="objShadow"></div>
+                <div class="object" id="objectBox">Těleso</div>
+                <div class="bottom-sand"></div>
+              </div>
+            </div>
+
+            <div class="sim-info">
+              <div class="info-title" id="simTitle">Ukázka hustoty</div>
+              <div class="info-desc" id="simDesc">
+                Vyber materiál, kapalinu nebo nastav vlastní hmotnost a objem. Aplikace vypočítá hustotu
+                a ukáže, co se s tělesem v kapalině stane.
+              </div>
+              <div class="status-badge" id="floatState">Plave / vznáší se / klesá</div>
+              <div class="display" id="mainDisplay">ρ = 1,00 g/cm³</div>
+              <div class="mini-cards">
+                <div class="mini-card" id="miniInfo1"></div>
+                <div class="mini-card" id="miniInfo2"></div>
+                <div class="mini-card" id="miniInfo3"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mode-box">
+          <div class="input-row">
+            <div>
+              <label for="presetSelect">Vyber příklad materiálu nebo tělesa:</label>
+              <select id="presetSelect">
+                <option value="custom">Vlastní hodnoty</option>
+                <option value="polystyren">Polystyren</option>
+                <option value="drevo">Dřevo</option>
+                <option value="led">Led</option>
+                <option value="jablko">Jablko</option>
+                <option value="plast">Plast</option>
+                <option value="voda">Voda</option>
+                <option value="kamen">Kámen</option>
+                <option value="zelezo">Železo</option>
+              </select>
+            </div>
+            <div>
+              <label for="liquidSelect">Vyber kapalinu:</label>
+              <select id="liquidSelect">
+                <option value="voda">Voda – 1,00 g/cm³</option>
+                <option value="olej">Olej – asi 0,90 g/cm³</option>
+                <option value="benzin">Benzín – asi 0,74 g/cm³</option>
+                <option value="lih">Líh – asi 0,79 g/cm³</option>
+                <option value="rtut">Rtuť – asi 13,60 g/cm³</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="input-row">
+            <div>
+              <label for="shapeSelect">Tvar tělesa:</label>
+              <select id="shapeSelect">
+                <option value="square">Krychle / kostka</option>
+                <option value="circle">Koule</option>
+                <option value="rounded">Zaoblené těleso</option>
+              </select>
+            </div>
+            <div>
+              <label for="densityMode">Co chceš počítat?</label>
+              <select id="densityMode">
+                <option value="density">Hustotu z hmotnosti a objemu</option>
+                <option value="volume">Objem z hmotnosti a hustoty</option>
+                <option value="mass">Hmotnost z hustoty a objemu</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="input-row">
+            <div>
+              <label for="massInput">Hmotnost tělesa (g):</label>
+              <input id="massInput" type="number" min="1" step="1" value="500" />
+            </div>
+            <div>
+              <label for="volumeInput">Objem tělesa (cm³):</label>
+              <input id="volumeInput" type="number" min="1" step="1" value="500" />
+            </div>
+          </div>
+
+          <div class="input-row">
+            <div>
+              <label for="densityInput">Hustota tělesa (g/cm³):</label>
+              <input id="densityInput" type="number" min="0.01" step="0.01" value="1" />
+            </div>
+            <div>
+              <label for="kgExampleInput">Příklad: hmotnost dřeva (kg):</label>
+              <input id="kgExampleInput" type="number" min="1" step="1" value="50" />
+            </div>
+          </div>
+
+          <div class="slider-card">
+            <div class="slider-label"><span>Hmotnost</span><span id="massSliderValue">500 g</span></div>
+            <input id="massSlider" type="range" min="50" max="8000" step="10" value="500" />
+          </div>
+
+          <div class="slider-card">
+            <div class="slider-label"><span>Objem</span><span id="volumeSliderValue">500 cm³</span></div>
+            <input id="volumeSlider" type="range" min="50" max="5000" step="10" value="500" />
+          </div>
+
+          <div class="hint">
+            Hustotu vypočítáme podle vztahu <strong>ρ = m / V</strong>.
+            Pokud známe hmotnost a hustotu, objem vypočítáme <strong>V = m / ρ</strong>.
+            Pokud známe hustotu a objem, hmotnost vypočítáme <strong>m = ρ · V</strong>.
+          </div>
+
+          <div class="quick">
+            <button data-preset="polystyren">Polystyren</button>
+            <button data-preset="drevo">Dřevo</button>
+            <button data-preset="led">Led</button>
+            <button data-preset="voda">Voda</button>
+            <button data-preset="kamen">Kámen</button>
+            <button data-preset="zelezo">Železo</button>
+          </div>
+        </div>
+
+        <div class="multi-wrap">
+          <div class="multi-title">VÍCE TĚLES NAJEDNOU VE VYBRANÉ KAPALINĚ</div>
+          <div class="multi-layout">
+            <div>
+              <div class="multi-tank">
+                <div class="multi-liquid" id="multiLiquid"></div>
+                <div class="water-label" id="multiLiquidLabel">VODA</div>
+                <div class="multi-waterline"></div>
+                <div class="multi-object" id="moPolystyren" style="left:20px;background:#f8fafc;">Poly<br>styren</div>
+                <div class="multi-object" id="moDrevo" style="left:78px;background:#c08457;">Dřevo</div>
+                <div class="multi-object" id="moLed" style="left:136px;background:#bfdbfe;border-radius:50%;">Led</div>
+                <div class="multi-object" id="moJablko" style="left:194px;background:#f87171;border-radius:50%;">Jablko</div>
+                <div class="multi-object" id="moKamen" style="left:120px;background:#94a3b8;">Kámen</div>
+                <div class="multi-object" id="moZelezo" style="left:205px;background:#9ca3af;border-radius:50%;">Železo</div>
+                <div class="multi-sand"></div>
+              </div>
+            </div>
+            <div class="legend" id="multiLegend"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Výpočty, převody a vysvětlení</h2>
+
+        <div class="results" id="results"></div>
+
+        <div class="answerBox" id="answerBox">
+          <strong>Výsledek:</strong> Po zadání hodnot se zde ukáže výpočet hustoty, hmotnosti nebo objemu.
+        </div>
+
+
+        <div class="exampleBox">
+          <strong>Kde zjistím hustotu látky?</strong><br>
+          Hustotu látek můžeme zjistit dvěma způsoby:
+          <br><br>
+          <strong>1. Vyhledáním v matematicko-fyzikálních tabulkách</strong><br>
+          V tabulkách bývá uvedena hustota pevných látek, kapalin i plynů.
+          Najdeme tam například hustotu vody, dřeva, železa, oleje, lihu, benzínu nebo rtuti.
+          Hodnoty bývají často zapsány v jednotkách <strong>kg/m³</strong>.
+          <br><br>
+          <strong>2. Výpočtem</strong><br>
+          Pokud známe hmotnost tělesa a jeho objem, můžeme hustotu vypočítat podle vzorce:
+          <br>
+          <strong>ρ = m / V</strong>
+          <br><br>
+          <strong>Důležitý převod jednotek hustoty:</strong><br>
+          <strong>1 g/cm³ = 1000 kg/m³</strong><br>
+          <strong>1000 kg/m³ = 1 g/cm³</strong>
+          <br><br>
+          <strong>Příklad:</strong><br>
+          Hustota vody je <strong>1000 kg/m³</strong>, což je stejné jako <strong>1 g/cm³</strong>.<br>
+          Hustota dřeva může být například <strong>500 kg/m³</strong>, což je stejné jako <strong>0,5 g/cm³</strong>.
+        </div>
+
+        <div class="exampleBox">
+          <strong>Jak spočítám hustotu?</strong><br>
+          Hustotu počítáme podle vzorce <strong>ρ = m / V</strong>.
+          To znamená: <strong>hustota = hmotnost / objem</strong>.
+          Hmotnost musí být například v gramech a objem v cm³. Výsledek pak bude v g/cm³.
+        </div>
+
+        <div class="exampleBox">
+          <strong>Když mám třeba 50 kg dřeva, jak zjistím jeho hustotu?</strong><br>
+          Samotná hmotnost <strong>50 kg</strong> nestačí. Musím znát také <strong>objem</strong>, který to dřevo zabírá.
+          Například pokud má 50 kg dřeva objem <strong>0,10 m³</strong>, pak:
+          <br><br>
+          <strong>ρ = m / V = 50 kg / 0,10 m³ = 500 kg/m³</strong>
+          <br><br>
+          To odpovídá <strong>0,50 g/cm³</strong>, protože <strong>1000 kg/m³ = 1 g/cm³</strong>.
+          <div class="calc-box" id="woodExampleBox"></div>
+        </div>
+
+        <div class="exampleBox">
+          <strong>Kapaliny v aplikaci:</strong>
+          <div class="density-table">
+            <div class="density-item"><strong>Voda:</strong> 1,00 g/cm³. Běžné porovnání pro plování těles.</div>
+            <div class="density-item"><strong>Olej:</strong> asi 0,90 g/cm³. Má menší hustotu než voda, proto na vodě plave.</div>
+            <div class="density-item"><strong>Benzín:</strong> asi 0,74 g/cm³. Je lehčí než voda a hořlavý.</div>
+            <div class="density-item"><strong>Líh:</strong> asi 0,79 g/cm³. Má menší hustotu než voda.</div>
+            <div class="density-item"><strong>Rtuť:</strong> asi 13,60 g/cm³. Je velmi hustá kapalina, proto v ní plave i železo.</div>
+            <div class="density-item"><strong>Důležité:</strong> skutečné hodnoty se mohou mírně lišit podle teploty a složení látky.</div>
+          </div>
+        </div>
+
+        <div class="exampleBox">
+          <strong>Zapamatuj si důležité vztahy:</strong>
+          <div class="formula">
+            <div>ρ = m / V</div>
+            <div>m = ρ · V</div>
+            <div>V = m / ρ</div>
+            <div>1 g/cm³ = 1000 kg/m³</div>
+          </div>
+          <div class="law">
+            <strong>Pravidlo pro kapaliny:</strong><br>
+            Pokud má těleso <strong>menší hustotu než kapalina</strong>, plave.
+            Pokud má <strong>přibližně stejnou hustotu jako kapalina</strong>, může se vznášet.
+            Pokud má <strong>větší hustotu než kapalina</strong>, klesá.
+          </div>
+        </div>
+
+        <div class="exampleBox">
+          <strong>Přibližné hustoty některých látek:</strong>
+          <div class="density-table">
+            <div class="density-item"><strong>Polystyren:</strong> asi 0,04 g/cm³</div>
+            <div class="density-item"><strong>Dřevo:</strong> asi 0,60 g/cm³</div>
+            <div class="density-item"><strong>Led:</strong> asi 0,92 g/cm³</div>
+            <div class="density-item"><strong>Jablko:</strong> asi 0,80 g/cm³</div>
+            <div class="density-item"><strong>Voda:</strong> 1,00 g/cm³</div>
+            <div class="density-item"><strong>Kámen:</strong> asi 2,60 g/cm³</div>
+            <div class="density-item"><strong>Železo:</strong> asi 7,80 g/cm³</div>
+            <div class="density-item"><strong>Rtuť:</strong> asi 13,60 g/cm³</div>
+          </div>
+        </div>
+
+        <div class="exampleBox" id="exampleCalc">
+          <strong>Slovní příklad:</strong><br>
+          Těleso má hmotnost 500 g a objem 500 cm³.
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      Webová učební pomůcka pro výuku hustoty, výpočtu hustoty a plování těles v různých kapalinách.
+    </footer>
+  </div>
+
+  <script>
+    const presetSelect = document.getElementById("presetSelect");
+    const liquidSelect = document.getElementById("liquidSelect");
+    const shapeSelect = document.getElementById("shapeSelect");
+    const densityMode = document.getElementById("densityMode");
+    const massInput = document.getElementById("massInput");
+    const volumeInput = document.getElementById("volumeInput");
+    const densityInput = document.getElementById("densityInput");
+    const kgExampleInput = document.getElementById("kgExampleInput");
+    const massSlider = document.getElementById("massSlider");
+    const volumeSlider = document.getElementById("volumeSlider");
+    const massSliderValue = document.getElementById("massSliderValue");
+    const volumeSliderValue = document.getElementById("volumeSliderValue");
+    const objectBox = document.getElementById("objectBox");
+    const objShadow = document.getElementById("objShadow");
+    const simTitle = document.getElementById("simTitle");
+    const simDesc = document.getElementById("simDesc");
+    const floatState = document.getElementById("floatState");
+    const mainDisplay = document.getElementById("mainDisplay");
+    const miniInfo1 = document.getElementById("miniInfo1");
+    const miniInfo2 = document.getElementById("miniInfo2");
+    const miniInfo3 = document.getElementById("miniInfo3");
+    const results = document.getElementById("results");
+    const answerBox = document.getElementById("answerBox");
+    const exampleCalc = document.getElementById("exampleCalc");
+    const liquidFill = document.getElementById("liquidFill");
+    const liquidLabel = document.getElementById("liquidLabel");
+    const multiLiquid = document.getElementById("multiLiquid");
+    const multiLiquidLabel = document.getElementById("multiLiquidLabel");
+    const multiLegend = document.getElementById("multiLegend");
+    const woodExampleBox = document.getElementById("woodExampleBox");
+
+    const presets = {
+      polystyren:{ mass:40, volume:1000, density:0.04, color:"#f8fafc", label:"Polystyren" },
+      drevo:{ mass:600, volume:1000, density:0.60, color:"#c08457", label:"Dřevo" },
+      led:{ mass:920, volume:1000, density:0.92, color:"#bfdbfe", label:"Led" },
+      jablko:{ mass:800, volume:1000, density:0.80, color:"#f87171", label:"Jablko" },
+      plast:{ mass:950, volume:1000, density:0.95, color:"#fbbf24", label:"Plast" },
+      voda:{ mass:1000, volume:1000, density:1.00, color:"#38bdf8", label:"Voda" },
+      kamen:{ mass:2600, volume:1000, density:2.60, color:"#94a3b8", label:"Kámen" },
+      zelezo:{ mass:7800, volume:1000, density:7.80, color:"#9ca3af", label:"Železo" }
+    };
+
+    const liquids = {
+      voda:{label:"Voda", density:1.00, color:"#38bdf8"},
+      olej:{label:"Olej", density:0.90, color:"#facc15"},
+      benzin:{label:"Benzín", density:0.74, color:"#fde68a"},
+      lih:{label:"Líh", density:0.79, color:"#a7f3d0"},
+      rtut:{label:"Rtuť", density:13.60, color:"#94a3b8"}
+    };
+
+    function formatNumber(n, maxDecimals = 2){
+      return new Intl.NumberFormat("cs-CZ",{maximumFractionDigits:maxDecimals,minimumFractionDigits:0}).format(n);
+    }
+
+    function setPreset(name){
+      if(name === "custom") return;
+      const p = presets[name];
+      if(!p) return;
+      massInput.value = p.mass;
+      volumeInput.value = p.volume;
+      densityInput.value = p.density;
+      massSlider.value = Math.min(p.mass, massSlider.max);
+      volumeSlider.value = Math.min(p.volume, volumeSlider.max);
+      objectBox.style.background = p.color;
+      objectBox.textContent = p.label;
+    }
+
+    function syncSliders(){
+      let mass = parseFloat(massInput.value) || 1;
+      let volume = parseFloat(volumeInput.value) || 1;
+      massSlider.value = Math.max(parseFloat(massSlider.min), Math.min(parseFloat(massSlider.max), mass));
+      volumeSlider.value = Math.max(parseFloat(volumeSlider.min), Math.min(parseFloat(volumeSlider.max), volume));
+      massSliderValue.textContent = `${formatNumber(mass,0)} g`;
+      volumeSliderValue.textContent = `${formatNumber(volume,0)} cm³`;
+    }
+
+    function setShape(shape){
+      if(shape === "square") objectBox.style.borderRadius = "16px";
+      else if(shape === "circle") objectBox.style.borderRadius = "50%";
+      else objectBox.style.borderRadius = "28px";
+    }
+
+    function updateObjectAppearance(){
+      const presetName = presetSelect.value;
+      if(presetName !== "custom" && presets[presetName]){
+        objectBox.style.background = presets[presetName].color;
+        objectBox.textContent = presets[presetName].label;
+      } else {
+        objectBox.style.background = "#f97316";
+        objectBox.textContent = "Těleso";
+      }
+    }
+
+    function applyModeCalculation(){
+      let mode = densityMode.value;
+      let m = parseFloat(massInput.value) || 1;
+      let v = parseFloat(volumeInput.value) || 1;
+      let rho = parseFloat(densityInput.value) || 1;
+
+      if(mode === "density"){
+        rho = m / v;
+        densityInput.value = rho.toFixed(3);
+      } else if(mode === "volume"){
+        v = m / rho;
+        volumeInput.value = v.toFixed(2);
+      } else if(mode === "mass"){
+        m = rho * v;
+        massInput.value = m.toFixed(2);
+      }
+      syncSliders();
+    }
+
+    function updateLiquid(){
+      const liq = liquids[liquidSelect.value];
+      liquidFill.style.background = liq.color;
+      multiLiquid.style.background = liq.color;
+      liquidLabel.textContent = `${liq.label.toUpperCase()} – hustota ${formatNumber(liq.density,2)} g/cm³`;
+      multiLiquidLabel.textContent = liq.label.toUpperCase();
+    }
+
+    function getState(density, liquidDensity){
+      const ratio = density / liquidDensity;
+      if(ratio < 0.97) return {state:"plave", top:42, badge:"Těleso plave na hladině", title:"Těleso plave", desc:"Těleso má menší hustotu než vybraná kapalina, proto zůstává na hladině.", bg:"#dcfce7", color:"#166534", shadow:0};
+      if(ratio <= 1.03) return {state:"vznáší se", top:140, badge:"Těleso se vznáší v kapalině", title:"Těleso se vznáší", desc:"Těleso má hustotu velmi podobnou hustotě kapaliny, proto se může vznášet.", bg:"#fef3c7", color:"#92400e", shadow:0};
+      return {state:"klesá", top:238, badge:"Těleso klesá ke dnu", title:"Těleso klesá", desc:"Těleso má větší hustotu než vybraná kapalina, proto klesá ke dnu.", bg:"#fee2e2", color:"#991b1b", shadow:1};
+    }
+
+    function updateSimulation(density, liquidDensity){
+      const s = getState(density, liquidDensity);
+      objectBox.style.top = s.top + "px";
+      objShadow.style.opacity = s.shadow;
+      floatState.textContent = s.badge;
+      floatState.style.background = s.bg;
+      floatState.style.color = s.color;
+      floatState.style.borderColor = s.color + "33";
+      simTitle.textContent = s.title;
+      simDesc.textContent = s.desc;
+    }
+
+    function updateMultiObjects(liquidDensity){
+      const positions = {
+        polystyren: document.getElementById("moPolystyren"),
+        drevo: document.getElementById("moDrevo"),
+        led: document.getElementById("moLed"),
+        jablko: document.getElementById("moJablko"),
+        kamen: document.getElementById("moKamen"),
+        zelezo: document.getElementById("moZelezo")
+      };
+      Object.keys(positions).forEach(key=>{
+        const rho = presets[key].density;
+        const state = getState(rho, liquidDensity);
+        positions[key].style.top = state.top + "px";
+      });
+
+      const liq = liquids[liquidSelect.value];
+      multiLegend.innerHTML = "";
+      ["polystyren","drevo","led","jablko","kamen","zelezo"].forEach(key=>{
+        const p = presets[key];
+        const s = getState(p.density, liquidDensity);
+        const item = document.createElement("div");
+        item.className = "legend-item";
+        item.innerHTML = `<span class="dot" style="background:${p.color};"></span><strong>${p.label}</strong><br>ρ ≈ ${formatNumber(p.density,2)} g/cm³ → ${s.state} v kapalině ${liq.label}.`;
+        multiLegend.appendChild(item);
+      });
+      const rule = document.createElement("div");
+      rule.className = "legend-item";
+      rule.innerHTML = `<strong>Pravidlo:</strong><br>Porovnáváme hustotu tělesa s hustotou kapaliny. Kapalina: ${liq.label}, ρ ≈ ${formatNumber(liq.density,2)} g/cm³.`;
+      multiLegend.appendChild(rule);
+    }
+
+    function updateWoodExample(){
+      const kg = parseFloat(kgExampleInput.value) || 50;
+      const woodDensity = 500; // kg/m3 example
+      const volumeM3 = kg / woodDensity;
+      const volumeLiters = volumeM3 * 1000;
+      woodExampleBox.innerHTML = `
+        <strong>Interaktivní ukázka pro dřevo:</strong><br>
+        Pokud budeme počítat s přibližnou hustotou dřeva <strong>500 kg/m³</strong>, pak pro <strong>${formatNumber(kg,0)} kg</strong> dřeva platí:<br>
+        <strong>V = m / ρ = ${formatNumber(kg,0)} / 500 = ${formatNumber(volumeM3,3)} m³</strong><br>
+        To je přibližně <strong>${formatNumber(volumeLiters,0)} litrů</strong> objemu.
+        <br><br>
+        Naopak, pokud bys změřila objem kusu dřeva a znala jeho hmotnost, hustotu spočítáš <strong>ρ = m / V</strong>.
+      `;
+    }
+
+    function updateResults(){
+      applyModeCalculation();
+      updateLiquid();
+      updateObjectAppearance();
+      setShape(shapeSelect.value);
+
+      let mass = parseFloat(massInput.value) || 1;
+      let volume = parseFloat(volumeInput.value) || 1;
+      let density = parseFloat(densityInput.value) || (mass/volume);
+      const densityKg = density * 1000;
+      const liq = liquids[liquidSelect.value];
+      const liquidDensity = liq.density;
+      const stateObj = getState(density, liquidDensity);
+
+      mainDisplay.textContent = `ρ tělesa = ${formatNumber(density,2)} g/cm³`;
+      miniInfo1.innerHTML = `<strong>Vybraná kapalina:</strong> ${liq.label} má hustotu přibližně ${formatNumber(liquidDensity,2)} g/cm³.`;
+      miniInfo2.innerHTML = `<strong>Výsledek:</strong> Těleso ${stateObj.state}, protože porovnáváme ${formatNumber(density,2)} g/cm³ a ${formatNumber(liquidDensity,2)} g/cm³.`;
+      miniInfo3.innerHTML = `<strong>Převod:</strong> ${formatNumber(density,2)} g/cm³ = ${formatNumber(densityKg,0)} kg/m³.`;
+
+      updateSimulation(density, liquidDensity);
+      updateMultiObjects(liquidDensity);
+      updateWoodExample();
+
+      const compareText = density < liquidDensity ? "menší hustotu než kapalina" : (Math.abs(density-liquidDensity)/liquidDensity <= 0.03 ? "přibližně stejnou hustotu jako kapalina" : "větší hustotu než kapalina");
+
+      const data = [
+        {symbol:"ρ", spoken:"hustota tělesa", value:`${formatNumber(density,2)} g/cm³`, full:"vypočítaná nebo zadaná hustota"},
+        {symbol:"ρ", spoken:"v SI", value:`${formatNumber(densityKg,0)} kg/m³`, full:"převod do kg/m³"},
+        {symbol:"m", spoken:"hmotnost", value:`${formatNumber(mass,0)} g`, full:"hmotnost tělesa"},
+        {symbol:"V", spoken:"objem", value:`${formatNumber(volume,0)} cm³`, full:"objem tělesa"},
+        {symbol:"kapalina", spoken:liq.label, value:`${formatNumber(liquidDensity,2)} g/cm³`, full:"hustota vybrané kapaliny"},
+        {symbol:"stav", spoken:"výsledek", value:stateObj.state, full:"co se stane v kapalině"}
+      ];
+
+      results.innerHTML = "";
+      data.forEach(item=>{
+        const card = document.createElement("div");
+        card.className = "unit";
+        card.innerHTML = `<div class="top"><div class="symbol">${item.symbol}</div><div class="spoken">${item.spoken}</div></div><div><div class="value">${item.value}</div><div class="full">${item.full}</div></div>`;
+        results.appendChild(card);
+      });
+
+      answerBox.innerHTML = `
+        <strong>Výpočet:</strong><br>
+        Hmotnost tělesa je <strong>${formatNumber(mass,0)} g</strong>, objem je <strong>${formatNumber(volume,0)} cm³</strong>.<br>
+        Hustota tělesa je <strong>ρ = m / V = ${formatNumber(mass,0)} / ${formatNumber(volume,0)} = ${formatNumber(density,2)} g/cm³</strong>.<br><br>
+        <strong>Porovnání s kapalinou:</strong><br>
+        Kapalina <strong>${liq.label}</strong> má hustotu asi <strong>${formatNumber(liquidDensity,2)} g/cm³</strong>.<br>
+        Těleso má <strong>${compareText}</strong>, proto <strong>${stateObj.state}</strong>.
+      `;
+
+      exampleCalc.innerHTML = `
+        <strong>Slovní příklad:</strong><br>
+        Těleso má hmotnost <strong>${formatNumber(mass,0)} g</strong> a objem <strong>${formatNumber(volume,0)} cm³</strong>.<br>
+        Hustota: <strong>ρ = ${formatNumber(mass,0)} / ${formatNumber(volume,0)} = ${formatNumber(density,2)} g/cm³</strong>.<br>
+        Vybraná kapalina je <strong>${liq.label}</strong> s hustotou <strong>${formatNumber(liquidDensity,2)} g/cm³</strong>.<br>
+        Výsledek: těleso <strong>${stateObj.state}</strong>.
+      `;
+    }
+
+    function markCustom(){ presetSelect.value = "custom"; }
+
+    presetSelect.addEventListener("change", ()=>{ setPreset(presetSelect.value); updateResults(); });
+    liquidSelect.addEventListener("change", updateResults);
+    shapeSelect.addEventListener("change", updateResults);
+    densityMode.addEventListener("change", updateResults);
+    massInput.addEventListener("input", ()=>{ markCustom(); updateResults(); });
+    volumeInput.addEventListener("input", ()=>{ markCustom(); updateResults(); });
+    densityInput.addEventListener("input", ()=>{ markCustom(); updateResults(); });
+    kgExampleInput.addEventListener("input", updateWoodExample);
+    massSlider.addEventListener("input", ()=>{ markCustom(); massInput.value = massSlider.value; updateResults(); });
+    volumeSlider.addEventListener("input", ()=>{ markCustom(); volumeInput.value = volumeSlider.value; updateResults(); });
+    document.querySelectorAll("button[data-preset]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{ presetSelect.value = btn.dataset.preset; setPreset(btn.dataset.preset); updateResults(); });
+    });
+
+    setPreset("custom");
+    updateResults();
+  </script>
+</body>
+</html>
