@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Měření fyzikálních veličin – ILang</title>
+<style>
+  :root{
+    --bg:#eef8ff; --card:#ffffff; --ink:#203040; --muted:#5d6b78;
+    --accent:#2f78b7; --accent2:#69a9df; --ok:#2f8f5b; --bad:#b64b4b;
+    --warn:#fff4c7; --line:#d9e4ec;
+    --blue:#e8f4ff; --green:#eaf8ef; --pink:#fff0f5; --peach:#fff2e5;
+    --lav:#f2efff; --mint:#e8fbf8;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:Arial,Helvetica,sans-serif;
+    background:
+      radial-gradient(circle at 10% 10%, rgba(190,225,255,.75), transparent 26%),
+      radial-gradient(circle at 90% 18%, rgba(213,245,224,.8), transparent 28%),
+      radial-gradient(circle at 30% 80%, rgba(255,221,235,.55), transparent 24%),
+      linear-gradient(135deg,#eaf7ff 0%,#f7f1ff 48%,#eefbea 100%);
+    color:var(--ink);
+    line-height:1.55;
+  }
+  header{
+    background:linear-gradient(135deg,rgba(206,235,255,.95),rgba(236,250,238,.95),rgba(255,237,246,.95));
+    padding:34px 18px;
+    border-bottom:1px solid var(--line)
+  }
+  .wrap{max-width:1100px;margin:auto}
+  h1{margin:0 0 8px;font-size:clamp(28px,5vw,48px)}
+  h2{margin-top:0}
+  .lead{font-size:1.08rem;color:var(--muted);max-width:850px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+  .card{
+    background:rgba(255,255,255,.88);
+    border:1px solid rgba(210,225,236,.95);
+    border-radius:18px;
+    padding:20px;
+    box-shadow:0 8px 24px rgba(30,70,100,.08);
+    backdrop-filter:blur(2px);
+  }
+  .grid .card:nth-child(6n+1){background:linear-gradient(145deg,var(--blue),#fff)}
+  .grid .card:nth-child(6n+2){background:linear-gradient(145deg,var(--green),#fff)}
+  .grid .card:nth-child(6n+3){background:linear-gradient(145deg,var(--pink),#fff)}
+  .grid .card:nth-child(6n+4){background:linear-gradient(145deg,var(--peach),#fff)}
+  .grid .card:nth-child(6n+5){background:linear-gradient(145deg,var(--lav),#fff)}
+  .grid .card:nth-child(6n+6){background:linear-gradient(145deg,var(--mint),#fff)}
+  section{padding:28px 18px}
+  .tag{display:inline-block;background:#eaf4fb;border-radius:999px;padding:6px 10px;margin:3px;font-size:.92rem}
+  .notice{background:var(--warn);border-left:6px solid #e3b928;padding:16px;border-radius:12px}
+  table{width:100%;border-collapse:collapse;background:white;border-radius:14px;overflow:hidden}
+  th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left}
+  th{background:#e9f3fa}
+  button,select,input{font:inherit}
+  button{
+    border:0;border-radius:12px;padding:10px 14px;cursor:pointer;
+    background:linear-gradient(135deg,#2f78b7,#5799d0);
+    color:white;font-weight:700;
+    box-shadow:0 4px 10px rgba(47,120,183,.18)
+  }
+  button.secondary{background:#718394}
+  button.choice{display:block;width:100%;margin:8px 0;text-align:left;background:#edf4f8;color:var(--ink);border:1px solid var(--line)}
+  button.choice:hover{background:#dcecf7}
+  .feedback{margin-top:10px;font-weight:700}
+  .ok{color:var(--ok)} .bad{color:var(--bad)}
+  .pairing{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .pairing select{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:white}
+  .qbox{
+    padding:16px;
+    background:linear-gradient(145deg,#eef7ff,#ffffff);
+    border:1px solid var(--line);
+    border-radius:14px
+  }
+  footer{padding:28px 18px;text-align:center;color:var(--muted)}
+  .score{font-size:1.35rem;font-weight:700}
+  @media(max-width:650px){.pairing{grid-template-columns:1fr} table{font-size:.9rem}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="tag">🦉 ILang</div>
+    <div class="tag">📚 Fyzika 6. ročník</div>
+    <h1>📏 Měření fyzikálních veličin</h1>
+    <p class="lead">Nauč se rozpoznat fyzikální veličinu, její značku, jednotku a měřidlo. Potom si vše vyzkoušej v přiřazovačkách, praktických úlohách a krátkém testu.</p>
+  </div>
+</header>
+
+<section>
+<div class="wrap">
+  <div class="grid">
+    <div class="card">
+      <h2>🔎 Co je fyzikální veličina?</h2>
+      <p>Fyzikální veličina je vlastnost tělesa nebo děje, kterou můžeme <strong>změřit nebo vypočítat</strong>.</p>
+      <p>Například délka lavice, hmotnost aktovky, čas běhu nebo teplota vody.</p>
+    </div>
+    <div class="card">
+      <h2>🎯 K čemu nám měření je?</h2>
+      <p>Měření nám umožňuje věci přesně porovnávat. Nestačí říct „stůl je dlouhý“ — můžeme říct například <strong>120 cm</strong>.</p>
+      <p>Stejné jednotky používáme proto, aby výsledku rozuměli všichni stejně.</p>
+    </div>
+    <div class="card">
+      <h2>🧰 Co potřebujeme k měření?</h2>
+      <p><strong>Měřidlo</strong> je pomůcka, pomocí které určujeme hodnotu fyzikální veličiny.</p>
+      <p>Například pravítko, metr, váhy, stopky, teploměr nebo odměrný válec.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<section>
+<div class="wrap">
+  <div class="notice">
+    <strong>⚠️ Pozor:</strong> Veličina není totéž co jednotka.<br>
+    <strong>Délka</strong> je veličina, <strong>metr</strong> je její jednotka.
+    <strong>Hmotnost</strong> je veličina, <strong>kilogram</strong> je její jednotka.
+  </div>
+</div>
+</section>
+
+<section>
+<div class="wrap">
+<h2>📘 Přehled základních veličin</h2>
+<div style="overflow-x:auto">
+<table>
+<thead><tr><th>Veličina</th><th>Značka</th><th>Základní / běžná jednotka</th><th>Značka jednotky</th><th>Čím ji měříme?</th></tr></thead>
+<tbody>
+<tr><td>Délka</td><td>l</td><td>metr</td><td>m</td><td>pravítko, metr, pásmo</td></tr>
+<tr><td>Hmotnost</td><td>m</td><td>kilogram</td><td>kg</td><td>váhy</td></tr>
+<tr><td>Čas</td><td>t</td><td>sekunda</td><td>s</td><td>hodiny, stopky</td></tr>
+<tr><td>Teplota</td><td>t</td><td>stupeň Celsia</td><td>°C</td><td>teploměr</td></tr>
+<tr><td>Objem</td><td>V</td><td>metr krychlový</td><td>m³</td><td>odměrný válec (kapaliny), výpočtem (pravidelná tělesa)</td></tr>
+<tr><td>Rychlost</td><td>v</td><td>metr za sekundu</td><td>m/s</td><td>rychloměr nebo výpočtem z dráhy a času</td></tr>
+<tr><td>Hustota</td><td>ρ</td><td>kilogram na metr krychlový</td><td>kg/m³</td><td>výpočtem z hmotnosti a objemu</td></tr>
+<tr><td>Síla</td><td>F</td><td>newton</td><td>N</td><td>siloměr</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+
+<section>
+<div class="wrap">
+<h2>🧪 Co čím měříme a proč?</h2>
+<div class="grid">
+  <div class="card"><h3>📏 Délka</h3><p>Pravítko používáme na malé předměty. Svinovací metr nebo pásmo se hodí na delší vzdálenosti, třeba délku učebny.</p></div>
+  <div class="card"><h3>⚖️ Hmotnost</h3><p>Váhy porovnávají nebo určují hmotnost tělesa. Jiný typ vah použijeme na člověka a jiný například v laboratoři.</p></div>
+  <div class="card"><h3>⏱️ Čas</h3><p>Hodiny určují čas, stopky používáme tehdy, když chceme měřit dobu trvání nějakého děje.</p></div>
+  <div class="card"><h3>🌡️ Teplota</h3><p>Teploměr reaguje na změny teploty. Podle účelu existují pokojové, venkovní, laboratorní i lékařské teploměry.</p></div>
+  <div class="card"><h3>🧪 Objem kapaliny</h3><p>Odměrný válec má stupnici. Kapalinu nalijeme dovnitř a její objem odečteme ve výšce hladiny.</p></div>
+  <div class="card"><h3>💪 Síla</h3><p>Siloměr využívá pružinu. Čím větší síla působí, tím více se pružina natáhne.</p></div>
+</div>
+</div>
+</section>
+
+<section>
+<div class="wrap">
+<h2>🎯 Přiřazovačka: Co čím změříš?</h2>
+<div class="card pairing" id="pairing"></div>
+<p id="pairFeedback" class="feedback"></p>
+<button onclick="checkPairs()">Zkontrolovat přiřazení</button>
+</div>
+</section>
+
+<section>
+<div class="wrap">
+<h2>🧠 Vyber správné měřidlo</h2>
+<div class="card qbox">
+  <p id="measureQuestion"></p>
+  <div id="measureChoices"></div>
+  <p id="measureFeedback" class="feedback"></p>
+  <button class="secondary" onclick="newMeasureQuestion()">Další otázka</button>
+</div>
+</div>
+</section>
+
+<section>
+<div class="wrap">
+<h2>🔍 Najdi chybu</h2>
+<div class="card qbox">
+  <p id="errorQuestion"></p>
+  <div id="errorChoices"></div>
+  <p id="errorFeedback" class="feedback"></p>
+  <button class="secondary" onclick="newErrorQuestion()">Další příklad</button>
+</div>
+</div>
+</section>
+
+<section>
+<div class="wrap">
+<h2>🏫 Co bys použil/a v praxi?</h2>
+<div class="grid">
+  <div class="card"><strong>Tloušťka učebnice</strong><p>Nejvhodnější je pravítko. Měříme malou délku.</p></div>
+  <div class="card"><strong>Délka školní chodby</strong><p>Nejvhodnější je pásmo nebo delší svinovací metr.</p></div>
+  <div class="card"><strong>50 ml vody</strong><p>Použijeme odměrný válec se stupnicí v mililitrech.</p></div>
+  <div class="card"><strong>Doba běhu na 60 m</strong><p>Použijeme stopky, protože měříme dobu trvání děje.</p></div>
+</div>
+</div>
+</section>
+
+<section>
+<div class="wrap">
+<h2>🏆 Závěrečný mini test</h2>
+<div class="card">
+  <p id="testQuestion"></p>
+  <div id="testChoices"></div>
+  <p id="testFeedback" class="feedback"></p>
+  <p class="score" id="score">Skóre: 0 / 0</p>
+  <button onclick="nextTest()">Další otázka</button>
+  <button class="secondary" onclick="resetTest()">Začít znovu</button>
+</div>
+</div>
+</section>
+
+<footer>
+© Mgr. Ivana Langweilová – ILang • Interaktivní výuková aplikace pro fyziku
+</footer>
+
+<script>
+const measuringPairs = [
+  ["Délka školní lavice","pravítko nebo metr"],
+  ["Hmotnost aktovky","váhy"],
+  ["Doba běhu na 60 m","stopky"],
+  ["Teplota vody","teploměr"],
+  ["Objem vody","odměrný válec"],
+  ["Velikost síly","siloměr"]
+];
+const tools = ["pravítko nebo metr","váhy","stopky","teploměr","odměrný válec","siloměr"];
+function renderPairs(){
+  const box=document.getElementById("pairing"); box.innerHTML="";
+  measuringPairs.forEach((p,i)=>{
+    box.innerHTML += `<div><strong>${p[0]}</strong></div><div><select id="pair${i}"><option value="">Vyber měřidlo…</option>${tools.map(t=>`<option>${t}</option>`).join("")}</select></div>`;
+  });
+}
+function checkPairs(){
+ let good=0;
+ measuringPairs.forEach((p,i)=>{ if(document.getElementById("pair"+i).value===p[1]) good++; });
+ const f=document.getElementById("pairFeedback");
+ f.textContent=`Správně: ${good} z ${measuringPairs.length}.`;
+ f.className="feedback "+(good===measuringPairs.length?"ok":"bad");
+}
+
+const measureQs=[
+ ["Chceš zjistit teplotu vody v kádince. Co použiješ?",["váhy","teploměr","stopky","pravítko"],1],
+ ["Chceš změřit délku učebny. Co je nejvhodnější?",["pásmo","teploměr","odměrný válec","siloměr"],0],
+ ["Chceš zjistit objem 70 ml vody. Co použiješ?",["metr","odměrný válec","váhy","hodiny"],1],
+ ["Chceš zjistit, za jak dlouho spolužák uběhne 60 m. Co použiješ?",["stopky","metr","teploměr","váhy"],0],
+ ["Chceš změřit velikost síly. Co použiješ?",["siloměr","odměrný válec","pravítko","stopky"],0]
+];
+let mq=0;
+function newMeasureQuestion(){ mq=(mq+1)%measureQs.length; showMeasure(); }
+function showMeasure(){
+ const q=measureQs[mq]; document.getElementById("measureQuestion").innerHTML="<strong>"+q[0]+"</strong>";
+ const c=document.getElementById("measureChoices"); c.innerHTML="";
+ q[1].forEach((x,i)=>{c.innerHTML+=`<button class="choice" onclick="answerMeasure(${i})">${x}</button>`});
+ document.getElementById("measureFeedback").textContent="";
+}
+function answerMeasure(i){
+ const q=measureQs[mq], f=document.getElementById("measureFeedback");
+ f.textContent=i===q[2]?"Správně! ✅":"Zkus to ještě jednou. ❌";
+ f.className="feedback "+(i===q[2]?"ok":"bad");
+}
+
+const errorQs=[
+ ["Eva změřila délku lavice a zapsala 120 kg.",["Chybná je jednotka","Chybná je veličina","Vše je správně"],0,"Délku nezapisujeme v kilogramech. Vhodné by bylo například 120 cm."],
+ ["Petr měřil teplotu vody pomocí stopek.",["Správně","Měl použít teploměr","Měl použít váhy"],1,"Teplotu měříme teploměrem."],
+ ["Hmotnost je fyzikální veličina a kilogram je její jednotka.",["Správně","Špatně"],0,"Ano. Veličina a jednotka nejsou totéž."],
+ ["Sílu měříme siloměrem a zapisujeme například 5 N.",["Správně","Špatně"],0,"Ano. Newton (N) je jednotka síly."]
+];
+let eq=0;
+function newErrorQuestion(){ eq=(eq+1)%errorQs.length; showError(); }
+function showError(){
+ const q=errorQs[eq]; document.getElementById("errorQuestion").innerHTML="<strong>"+q[0]+"</strong>";
+ const c=document.getElementById("errorChoices"); c.innerHTML="";
+ q[1].forEach((x,i)=>{c.innerHTML+=`<button class="choice" onclick="answerError(${i})">${x}</button>`});
+ document.getElementById("errorFeedback").textContent="";
+}
+function answerError(i){
+ const q=errorQs[eq], f=document.getElementById("errorFeedback");
+ f.textContent=(i===q[2]?"Správně. ":"Ne. ")+q[3];
+ f.className="feedback "+(i===q[2]?"ok":"bad");
+}
+
+const testQs=[
+ ["Jaká je značka délky?",["m","l","kg","V"],1],
+ ["Jaká je jednotka hmotnosti v SI?",["metr","kilogram","sekunda","newton"],1],
+ ["Čím změříme dobu běhu?",["stopkami","teploměrem","váhami","odměrným válcem"],0],
+ ["Jaká je značka objemu?",["F","v","V","t"],2],
+ ["Jaká je značka jednotky síly?",["kg","N","m³","s"],1],
+ ["Co je kilogram?",["veličina","měřidlo","jednotka hmotnosti","značka délky"],2],
+ ["Čím změříme teplotu?",["teploměrem","siloměrem","pásmem","váhami"],0],
+ ["Jaká je značka rychlosti?",["v","V","F","l"],0],
+ ["Čím změříme objem kapaliny?",["odměrným válcem","pravítkem","stopkami","siloměrem"],0],
+ ["Které tvrzení je správné?",["metr je veličina","délka je jednotka","délka je veličina a metr jednotka","kg je značka času"],2]
+];
+let ti=0, score=0, answered=0;
+function showTest(){
+ const q=testQs[ti]; document.getElementById("testQuestion").innerHTML=`<strong>Otázka ${answered+1}:</strong> ${q[0]}`;
+ const c=document.getElementById("testChoices"); c.innerHTML="";
+ q[1].forEach((x,i)=>{c.innerHTML+=`<button class="choice" onclick="answerTest(${i})">${x}</button>`});
+ document.getElementById("testFeedback").textContent="";
+}
+function answerTest(i){
+ const q=testQs[ti], f=document.getElementById("testFeedback");
+ if(f.dataset.done==="1") return;
+ answered++;
+ if(i===q[2]){score++; f.textContent="Správně! ✅"; f.className="feedback ok";}
+ else {f.textContent=`Nesprávně. Správná odpověď: ${q[1][q[2]]}.`; f.className="feedback bad";}
+ f.dataset.done="1";
+ document.getElementById("score").textContent=`Skóre: ${score} / ${answered}`;
+}
+function nextTest(){
+ const f=document.getElementById("testFeedback");
+ if(f.dataset.done!=="1"){f.textContent="Nejprve vyber odpověď."; f.className="feedback bad"; return;}
+ ti=(ti+1)%testQs.length; f.dataset.done="0"; showTest();
+}
+function resetTest(){ti=0;score=0;answered=0;document.getElementById("score").textContent="Skóre: 0 / 0";document.getElementById("testFeedback").dataset.done="0";showTest();}
+
+renderPairs(); showMeasure(); showError(); resetTest();
+</script>
+</body>
+</html>
