@@ -455,6 +455,402 @@ function resetTest(){
 }
 
 renderPairs();renderMats();showWhat();showError();resetTest();
+  <section>
+  <div class="wrap">
+    <h2>🧭 Interaktivní mapa: jeď podle kompasu</h2>
+
+    <div class="simBox">
+      <p class="small">
+        Pohybuj autíčkem po mapě pomocí světových stran.
+        Sleduj kompas – <strong>červená střelka stále ukazuje sever</strong>,
+        i když autíčko jede jiným směrem.
+      </p>
+
+      <canvas id="mapCanvas" width="920" height="520"></canvas>
+
+      <div style="margin-top:12px;">
+        <button onclick="moveCarCompass('N')">⬆ Sever</button>
+        <button onclick="moveCarCompass('E')">➡ Východ</button>
+        <button onclick="moveCarCompass('S')">⬇ Jih</button>
+        <button onclick="moveCarCompass('W')">⬅ Západ</button>
+
+        <button class="secondary" onclick="toggleCompassMagnet()">
+          🧲 Magnet u kompasu
+        </button>
+
+        <button class="secondary" onclick="resetCompassMap()">
+          🔄 Reset
+        </button>
+      </div>
+
+      <p id="mapCompassInfo" class="feedback">
+        Autíčko stojí u školy. Červená střelka kompasu ukazuje sever.
+      </p>
+
+      <div class="notice" style="margin-top:14px;">
+        <strong>Zapamatuj si:</strong>
+        Kompas se orientuje podle magnetického pole Země.
+        Silný magnet položený blízko kompasu může střelku vychýlit.
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+const compassCanvas = document.getElementById("mapCanvas");
+const compassCtx = compassCanvas.getContext("2d");
+
+let compassCar = {
+  x: 460,
+  y: 390,
+  direction: "N"
+};
+
+let compassMagnet = false;
+let compassNeedleAngle = 0;
+const compassStep = 55;
+
+function drawCompassMap() {
+  compassCtx.clearRect(
+    0,
+    0,
+    compassCanvas.width,
+    compassCanvas.height
+  );
+
+  /* TRÁVA */
+  compassCtx.fillStyle = "#eaf7e7";
+  compassCtx.fillRect(
+    0,
+    0,
+    compassCanvas.width,
+    compassCanvas.height
+  );
+
+  /* CESTY */
+  compassCtx.strokeStyle = "#d5c19e";
+  compassCtx.lineWidth = 34;
+  compassCtx.lineCap = "round";
+
+  compassCtx.beginPath();
+  compassCtx.moveTo(100, 390);
+  compassCtx.lineTo(820, 390);
+  compassCtx.stroke();
+
+  compassCtx.beginPath();
+  compassCtx.moveTo(460, 75);
+  compassCtx.lineTo(460, 480);
+  compassCtx.stroke();
+
+  compassCtx.beginPath();
+  compassCtx.moveTo(220, 150);
+  compassCtx.lineTo(760, 150);
+  compassCtx.stroke();
+
+  /* STROMY */
+  drawCompassTree(130, 100);
+  drawCompassTree(175, 110);
+  drawCompassTree(790, 95);
+  drawCompassTree(820, 135);
+  drawCompassTree(120, 250);
+  drawCompassTree(800, 270);
+
+  /* RYBNÍK */
+  compassCtx.fillStyle = "#9ed7ef";
+  compassCtx.beginPath();
+  compassCtx.ellipse(
+    720,
+    290,
+    85,
+    48,
+    0,
+    0,
+    Math.PI * 2
+  );
+  compassCtx.fill();
+
+  compassCtx.fillStyle = "#245a75";
+  compassCtx.font = "bold 18px Arial";
+  compassCtx.fillText("RYBNÍK", 680, 295);
+
+  /* DŮM */
+  compassCtx.fillStyle = "#f1b5b5";
+  compassCtx.fillRect(690, 110, 100, 70);
+
+  compassCtx.fillStyle = "#a75b5b";
+  compassCtx.beginPath();
+  compassCtx.moveTo(680, 110);
+  compassCtx.lineTo(740, 70);
+  compassCtx.lineTo(800, 110);
+  compassCtx.closePath();
+  compassCtx.fill();
+
+  compassCtx.fillStyle = "#203040";
+  compassCtx.font = "bold 18px Arial";
+  compassCtx.fillText("DŮM", 716, 150);
+
+  /* ŠKOLA */
+  compassCtx.fillStyle = "#f3cc73";
+  compassCtx.fillRect(390, 415, 140, 70);
+
+  compassCtx.fillStyle = "#b5684c";
+  compassCtx.beginPath();
+  compassCtx.moveTo(380, 415);
+  compassCtx.lineTo(460, 360);
+  compassCtx.lineTo(540, 415);
+  compassCtx.closePath();
+  compassCtx.fill();
+
+  compassCtx.fillStyle = "#203040";
+  compassCtx.font = "bold 18px Arial";
+  compassCtx.fillText("ŠKOLA", 425, 458);
+
+  /* LES */
+  compassCtx.fillStyle = "#35633b";
+  compassCtx.font = "bold 20px Arial";
+  compassCtx.fillText("LES", 135, 65);
+
+  /* SVĚTOVÉ STRANY NA MAPĚ */
+  compassCtx.fillStyle = "#203040";
+  compassCtx.font = "bold 24px Arial";
+
+  compassCtx.fillText("S", 450, 32);
+  compassCtx.fillText("J", 450, 512);
+  compassCtx.fillText("Z", 22, 260);
+  compassCtx.fillText("V", 885, 260);
+
+  drawCompassCar(
+    compassCar.x,
+    compassCar.y,
+    compassCar.direction
+  );
+
+  drawBigCompass(135, 390);
+
+  if (compassMagnet) {
+    drawCompassMagnet(260, 390);
+  }
+}
+
+function drawCompassTree(x, y) {
+  compassCtx.fillStyle = "#765033";
+  compassCtx.fillRect(x - 5, y, 10, 27);
+
+  compassCtx.fillStyle = "#4d9952";
+  compassCtx.beginPath();
+  compassCtx.arc(x, y - 5, 23, 0, Math.PI * 2);
+  compassCtx.fill();
+}
+
+function drawCompassCar(x, y, direction) {
+  compassCtx.save();
+
+  compassCtx.translate(x, y);
+
+  let angle = 0;
+
+  if (direction === "N") angle = -Math.PI / 2;
+  if (direction === "E") angle = 0;
+  if (direction === "S") angle = Math.PI / 2;
+  if (direction === "W") angle = Math.PI;
+
+  compassCtx.rotate(angle);
+
+  compassCtx.fillStyle = "#ef6d55";
+  compassCtx.fillRect(-30, -17, 60, 34);
+
+  compassCtx.fillStyle = "#cbe7ff";
+  compassCtx.fillRect(-5, -14, 23, 28);
+
+  compassCtx.fillStyle = "#333";
+
+  compassCtx.beginPath();
+  compassCtx.arc(-19, -19, 6, 0, Math.PI * 2);
+  compassCtx.fill();
+
+  compassCtx.beginPath();
+  compassCtx.arc(19, -19, 6, 0, Math.PI * 2);
+  compassCtx.fill();
+
+  compassCtx.beginPath();
+  compassCtx.arc(-19, 19, 6, 0, Math.PI * 2);
+  compassCtx.fill();
+
+  compassCtx.beginPath();
+  compassCtx.arc(19, 19, 6, 0, Math.PI * 2);
+  compassCtx.fill();
+
+  compassCtx.restore();
+}
+
+function drawBigCompass(x, y) {
+  compassCtx.save();
+
+  compassCtx.translate(x, y);
+
+  /* TĚLO KOMPASU */
+  compassCtx.fillStyle = "rgba(255,255,255,0.96)";
+  compassCtx.beginPath();
+  compassCtx.arc(0, 0, 82, 0, Math.PI * 2);
+  compassCtx.fill();
+
+  compassCtx.strokeStyle = "#657584";
+  compassCtx.lineWidth = 4;
+  compassCtx.stroke();
+
+  /* SVĚTOVÉ STRANY */
+  compassCtx.fillStyle = "#203040";
+  compassCtx.font = "bold 20px Arial";
+
+  compassCtx.fillText("S", -7, -56);
+  compassCtx.fillText("J", -6, 70);
+  compassCtx.fillText("Z", -68, 7);
+  compassCtx.fillText("V", 55, 7);
+
+  /* STŘELKA */
+  compassCtx.rotate(compassNeedleAngle);
+
+  /* ČERVENÁ ČÁST = SEVER */
+  compassCtx.fillStyle = "#e44747";
+  compassCtx.beginPath();
+  compassCtx.moveTo(0, -60);
+  compassCtx.lineTo(-12, 0);
+  compassCtx.lineTo(12, 0);
+  compassCtx.closePath();
+  compassCtx.fill();
+
+  /* MODRÁ ČÁST = JIH */
+  compassCtx.fillStyle = "#4476d6";
+  compassCtx.beginPath();
+  compassCtx.moveTo(0, 60);
+  compassCtx.lineTo(-12, 0);
+  compassCtx.lineTo(12, 0);
+  compassCtx.closePath();
+  compassCtx.fill();
+
+  compassCtx.fillStyle = "#333";
+  compassCtx.beginPath();
+  compassCtx.arc(0, 0, 7, 0, Math.PI * 2);
+  compassCtx.fill();
+
+  compassCtx.restore();
+
+  compassCtx.fillStyle = "#203040";
+  compassCtx.font = "bold 17px Arial";
+  compassCtx.fillText("KOMPAS", x - 40, y + 110);
+}
+
+function drawCompassMagnet(x, y) {
+  compassCtx.fillStyle = "#e85b5b";
+  compassCtx.fillRect(x - 50, y - 22, 50, 44);
+
+  compassCtx.fillStyle = "#4c79d8";
+  compassCtx.fillRect(x, y - 22, 50, 44);
+
+  compassCtx.fillStyle = "#ffffff";
+  compassCtx.font = "bold 21px Arial";
+
+  compassCtx.fillText("N", x - 34, y + 8);
+  compassCtx.fillText("S", x + 16, y + 8);
+
+  compassCtx.fillStyle = "#203040";
+  compassCtx.font = "bold 14px Arial";
+  compassCtx.fillText("MAGNET", x - 32, y - 34);
+}
+
+function moveCarCompass(direction) {
+  compassCar.direction = direction;
+
+  if (direction === "N") {
+    compassCar.y -= compassStep;
+  }
+
+  if (direction === "S") {
+    compassCar.y += compassStep;
+  }
+
+  if (direction === "E") {
+    compassCar.x += compassStep;
+  }
+
+  if (direction === "W") {
+    compassCar.x -= compassStep;
+  }
+
+  compassCar.x = Math.max(
+    80,
+    Math.min(840, compassCar.x)
+  );
+
+  compassCar.y = Math.max(
+    75,
+    Math.min(450, compassCar.y)
+  );
+
+  updateCompassText();
+  drawCompassMap();
+}
+
+function toggleCompassMagnet() {
+  compassMagnet = !compassMagnet;
+
+  if (compassMagnet) {
+    compassNeedleAngle = Math.PI / 3;
+  } else {
+    compassNeedleAngle = 0;
+  }
+
+  updateCompassText();
+  drawCompassMap();
+}
+
+function updateCompassText() {
+  const info = document.getElementById("mapCompassInfo");
+
+  const names = {
+    N: "sever",
+    E: "východ",
+    S: "jih",
+    W: "západ"
+  };
+
+  if (compassMagnet) {
+    info.textContent =
+      "Autíčko míří na " +
+      names[compassCar.direction] +
+      ". Magnet je blízko kompasu – střelka se vychýlila!";
+
+    info.className = "feedback bad";
+  } else {
+    info.textContent =
+      "Autíčko míří na " +
+      names[compassCar.direction] +
+      ". Červená střelka kompasu stále ukazuje sever.";
+
+    info.className = "feedback ok";
+  }
+}
+
+function resetCompassMap() {
+  compassCar.x = 460;
+  compassCar.y = 390;
+  compassCar.direction = "N";
+
+  compassMagnet = false;
+  compassNeedleAngle = 0;
+
+  const info = document.getElementById("mapCompassInfo");
+
+  info.textContent =
+    "Autíčko stojí u školy. Červená střelka kompasu ukazuje sever.";
+
+  info.className = "feedback";
+
+  drawCompassMap();
+}
+
+drawCompassMap();
+</script>
 </script>
 </body>
 </html>
