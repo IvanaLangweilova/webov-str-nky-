@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atom a jeho stavba – ILang</title>
+<style>
+  :root{
+    --ink:#203040;
+    --muted:#5d6b78;
+    --line:#d9e4ec;
+    --warn:#fff4c7;
+    --ok:#238355;
+    --bad:#b64b4b;
+    --blue:#e8f4ff;
+    --green:#eaf8ef;
+    --pink:#fff0f5;
+    --peach:#fff2e5;
+    --lav:#f2efff;
+    --mint:#e8fbf8;
+    --yellow:#fff8df;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:Arial,Helvetica,sans-serif;
+    background:
+      radial-gradient(circle at 10% 10%, rgba(190,225,255,.75), transparent 26%),
+      radial-gradient(circle at 90% 18%, rgba(213,245,224,.8), transparent 28%),
+      radial-gradient(circle at 30% 80%, rgba(255,221,235,.55), transparent 24%),
+      linear-gradient(135deg,#eaf7ff 0%,#f7f1ff 48%,#eefbea 100%);
+    color:var(--ink);
+    line-height:1.55;
+  }
+  header{
+    background:linear-gradient(135deg,rgba(206,235,255,.95),rgba(236,250,238,.95),rgba(255,237,246,.95));
+    padding:34px 18px;
+    border-bottom:1px solid var(--line);
+  }
+  .wrap{max-width:1140px;margin:auto}
+  h1{margin:0 0 10px;font-size:clamp(28px,5vw,48px)}
+  h2{margin-top:0}
+  h3{margin-top:0}
+  .lead{font-size:1.08rem;color:var(--muted);max-width:920px}
+  section{padding:28px 18px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+  .card{
+    background:rgba(255,255,255,.88);
+    border:1px solid rgba(210,225,236,.95);
+    border-radius:18px;
+    padding:20px;
+    box-shadow:0 8px 24px rgba(30,70,100,.08);
+    backdrop-filter:blur(2px);
+  }
+  .grid .card:nth-child(6n+1){background:linear-gradient(145deg,var(--blue),#fff)}
+  .grid .card:nth-child(6n+2){background:linear-gradient(145deg,var(--green),#fff)}
+  .grid .card:nth-child(6n+3){background:linear-gradient(145deg,var(--pink),#fff)}
+  .grid .card:nth-child(6n+4){background:linear-gradient(145deg,var(--peach),#fff)}
+  .grid .card:nth-child(6n+5){background:linear-gradient(145deg,var(--lav),#fff)}
+  .grid .card:nth-child(6n+6){background:linear-gradient(145deg,var(--mint),#fff)}
+  .tag{
+    display:inline-block;
+    background:#eaf4fb;
+    border-radius:999px;
+    padding:6px 10px;
+    margin:3px;
+    font-size:.92rem
+  }
+  .notice{
+    background:var(--warn);
+    border-left:6px solid #e3b928;
+    padding:16px;
+    border-radius:12px;
+  }
+  table{width:100%;border-collapse:collapse;background:white;border-radius:14px;overflow:hidden}
+  th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left}
+  th{background:#e9f3fa}
+  .qbox{
+    padding:16px;
+    background:linear-gradient(145deg,#eef7ff,#ffffff);
+    border:1px solid var(--line);
+    border-radius:14px
+  }
+  button,select,input{font:inherit}
+  button{
+    border:0;border-radius:12px;padding:10px 14px;cursor:pointer;
+    background:linear-gradient(135deg,#2f78b7,#5799d0);
+    color:white;font-weight:700;
+    box-shadow:0 4px 10px rgba(47,120,183,.18)
+  }
+  button.secondary{background:linear-gradient(135deg,#718394,#8c9aaa)}
+  button.choice{
+    display:block;width:100%;margin:8px 0;text-align:left;
+    background:#edf4f8;color:var(--ink);border:1px solid var(--line);box-shadow:none
+  }
+  button.choice:hover{background:#dcecf7}
+  .feedback{margin-top:10px;font-weight:700}
+  .ok{color:var(--ok)} .bad{color:var(--bad)}
+  .pairing{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .pairing select{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:white}
+  .score{font-size:1.35rem;font-weight:700}
+  footer{padding:28px 18px;text-align:center;color:var(--muted)}
+  .builder{
+    display:grid;
+    grid-template-columns:1.2fr .8fr;
+    gap:16px;
+  }
+  .builder .panel{
+    background:rgba(255,255,255,.92);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:18px;
+  }
+  .field{margin:10px 0}
+  .field label{display:block;font-weight:700;margin-bottom:6px}
+  .field input, .field select{
+    width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:white;
+  }
+  .atom-visual{
+    position:relative;
+    width:300px;height:300px;margin:14px auto 8px;
+    border-radius:50%;
+    background:radial-gradient(circle at center, rgba(255,241,170,.55) 0, rgba(255,241,170,.35) 46px, transparent 48px),
+               radial-gradient(circle at center, rgba(188,223,255,.36) 0, rgba(188,223,255,.25) 110px, transparent 112px),
+               radial-gradient(circle at center, rgba(219,244,227,.32) 0, rgba(219,244,227,.22) 140px, transparent 142px);
+    border:1px dashed #c6d8e5;
+  }
+  .orbit{
+    position:absolute;left:50%;top:50%;
+    transform:translate(-50%,-50%);
+    border:2px solid rgba(116,151,184,.35);
+    border-radius:50%;
+  }
+  .o1{width:120px;height:120px}
+  .o2{width:200px;height:200px}
+  .nucleus{
+    position:absolute;left:50%;top:50%;
+    transform:translate(-50%,-50%);
+    width:88px;height:88px;border-radius:50%;
+    background:radial-gradient(circle at 35% 35%, #fff8d7, #ffd7b1);
+    border:2px solid rgba(220,170,125,.55);
+    display:flex;align-items:center;justify-content:center;text-align:center;
+    font-size:.9rem;font-weight:700;padding:8px;
+  }
+  .electron,.proton,.neutron{
+    position:absolute;display:flex;align-items:center;justify-content:center;
+    width:28px;height:28px;border-radius:50%;font-size:.9rem;font-weight:700;
+  }
+  .electron{background:#d6ecff;border:1px solid #78aed9}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.95rem;margin-top:8px}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .dot{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%}
+  .dot.e{background:#d6ecff;border:1px solid #78aed9}
+  .dot.p{background:#ffe0e0;border:1px solid #d28f8f}
+  .dot.n{background:#e8f2dd;border:1px solid #98af7f}
+  .tiny-note{font-size:.95rem;color:var(--muted)}
+  @media(max-width:900px){.builder{grid-template-columns:1fr}}
+  @media(max-width:680px){
+    .pairing{grid-template-columns:1fr}
+    table{font-size:.9rem}
+    .atom-visual{width:260px;height:260px}
+    .o1{width:108px;height:108px}
+    .o2{width:180px;height:180px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="tag">🦉 ILang</div>
+    <div class="tag">📚 Fyzika 6. ročník</div>
+    <h1>⚛️ Atom a jeho stavba</h1>
+    <p class="lead">Zjisti, z čeho je atom složen, proč je důležité znát protony, neutrony a elektrony a kde se s tím setkáme v praxi. Čekají tě přehledy, přiřazovačky, skládání atomu i závěrečný test.</p>
+  </div>
+</header>
+
+<section>
+<div class="wrap">
+  <div class="grid">
+    <div class="card">
+      <h2>🧠 Co je atom?</h2>
+      <p>Atom je <strong>velmi malá částice látky</strong>. Všechny látky kolem nás jsou tvořeny atomy.</p>
+      <p>Atom má <strong>jádro</strong> a kolem něj se pohybují <strong>elektrony</strong>.</p>
+    </div>
+    <div class="card">
+      <h2>🎯 K čemu nám to je?</h2>
+      <p>Znalost stavby atomu nám pomáhá pochopit vlastnosti látek, elektřinu, chemické reakce, magnetismus i moderní technologie.</p>
+      <p>Díky tomu rozumíme například tomu, proč některé látky vedou elektrický proud a jiné ne.</p>
+    </div>
+    <div class="card">
+      <h2>🏠 Kde se s tím setkáme?</h2>
+      <p>V bateriích, žárovkách, polovodičích, počítačích, telefonech, v lékařství, v chemii, v jaderné energetice i při zkoumání vesmíru.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<section>
+<div class="wrap">
+  <div class="notice">
+    <strong>⚠️ Pozor:</strong> Atom je elektricky neutrální tehdy, když má <strong>stejný počet protonů a elektronů</strong>.
+    Počet protonů určuje, o který prvek se jedná.
+  </div>
+</div>
+</section>
+
+<section>
+<div class="wrap">
+<h2>📘 Z čeho se atom skládá?</h2>
+<div style="overflow-x:auto">
+<table>
+<thead>
+<tr>
+  <th>Částice</th>
+  <th>Značka / náboj</th>
+  <th>Kde je?</th>
+  <th>Co je důležité vědět?</th>
+</tr>
+</thead>
+<tbody>
+<tr><td>Proton</td><td>p⁺ / kladný</td><td>v jádře</td><td>Počet protonů určuje chemický prvek.</td></tr>
+<tr><td>Neutron</td><td>n⁰ / bez náboje</td><td>v jádře</td><td>Společně s protony tvoří jádro atomu.</td></tr>
+<tr><td>Elektron</td><td>e⁻ / záporný</td><td>v elektronovém obalu</td><td>Pohybuje se kolem jádra a podílí se na elektrických jevech.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+
+<section>
+<div class="wrap">
+<h2>💡 Zajímavé informace</h2>
+<div class="grid">
+  <div class="card">
+    <h3>🔢 Protonové číslo</h3>
+    <p>Protonové číslo je počet protonů v jádře atomu. Například vodík má 1 proton, helium 2 protony a kyslík 8 protonů.</p>
+  </div>
+  <div class="card">
+    <h3>⚖️ Hmotnost atomu</h3>
+    <p>Většina hmotnosti atomu je soustředěna v jádře, tedy v protonech a neutronech.</p>
+  </div>
+  <div class="card">
+    <h3>💡 Elektrony a elektřina</h3>
+    <p>Pohyb elektronů souvisí s elektrickým proudem. Proto je znalost elektronů důležitá i ve fyzice.</p>
+  </div>
+  <div class="card">
+    <h3>🌍 Všechno je z atomů</h3>
+    <p>Vzduch, voda, kámen, člověk, zvířata i rostliny – všechno je složeno z atomů.</p>
+  </div>
+</div>
+</div>
+</section>
+
+<section>
+<div class="wrap">
+<h2>🎯 Přiřazovačka: Částice – náboj – místo</h2>
+<div class="card pairing" id="pairing"></div>
+<p id="pairFeedback" class="feedback"></p>
+<button onclick="checkPairs()">Zkontrolovat přiřazení</button>
+</div>
+</section>
+
+<section>
+<div class="wrap">
+<h2>⚛️ Sestav atom</h2>
+<div class="builder">
+  <div class="panel">
+    <div class="field">
+      <label for="elementSelect">Vyber prvek:</label>
+      <select id="elementSelect" onchange="updateTargetInfo()">
+        <option value="H">Vodík (H)</option>
+        <option value="He">Helium (He)</option>
+        <option value="Li">Lithium (Li)</option>
+        <option value="C">Uhlík (C)</option>
+        <option value="O">Kyslík (O)</option>
+        <option value="Na">Sodík (Na)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="protons">Počet protonů:</label>
+      <input id="protons" type="number" min="0" value="1" oninput="renderAtom()">
+    </div>
+    <div class="field">
+      <label for="neutrons">Počet neutronů:</label>
+      <input id="neutrons" type="number" min="0" value="0" oninput="renderAtom()">
+    </div>
+    <div class="field">
+      <label for="electrons">Počet elektronů:</label>
+      <input id="electrons" type="number" min="0" value="1" oninput="renderAtom()">
+    </div>
+    <button onclick="checkAtom()">Zkontrolovat atom</button>
+    <button class="secondary" onclick="fillHint()">Napovědět</button>
+    <p id="atomFeedback" class="feedback"></p>
+    <p class="tiny-note" id="targetInfo"></p>
+  </div>
+
+  <div class="panel">
+    <div class="atom-visual" id="atomVisual">
+      <div class="orbit o1"></div>
+      <div class="orbit o2"></div>
+      <div class="nucleus" id="nucleusLabel">jádro</div>
+    </div>
+    <div class="legend">
+      <span><span class="dot p">+</span> proton</span>
+      <span><span class="dot n">0</span> neutron</span>
+      <span><span class="dot e">−</span> elektron</span>
+    </div>
+  </div>
+</div>
+</div>
+</section>
+
+<section>
+<div class="wrap">
+<h2>🧠 Vyber správnou odpověď</h2>
+<div class="card qbox">
+  <p id="mcQuestion"></p>
+  <div id="mcChoices"></div>
+  <p id="mcFeedback" class="feedback"></p>
+  <button class="secondary" onclick="nextMc()">Další otázka</button>
+</div>
+</div>
+</section>
+
+<section>
+<div class="wrap">
+<h2>🔍 Najdi chybu</h2>
+<div class="card qbox">
+  <p id="errorQuestion"></p>
+  <div id="errorChoices"></div>
+  <p id="errorFeedback" class="feedback"></p>
+  <button class="secondary" onclick="nextError()">Další příklad</button>
+</div>
+</div>
+</section>
+
+<section>
+<div class="wrap">
+<h2>🏫 Kde se s atomy setkáváme v praxi?</h2>
+<div class="grid">
+  <div class="card"><h3>🔋 Baterie</h3><p>Při fungování baterií se pohybují elektrony. Proto je znalost stavby atomu důležitá i pro elektřinu.</p></div>
+  <div class="card"><h3>💻 Elektronika</h3><p>Počítače, telefony a čipy využívají vlastnosti atomů a elektronů v materiálech.</p></div>
+  <div class="card"><h3>🧪 Chemie</h3><p>Chemické reakce souvisejí s tím, jak se atomy spojují a jak si „předávají“ elektrony.</p></div>
+  <div class="card"><h3>🏥 Lékařství</h3><p>Rentgen, radioaktivní záření nebo některé léčebné postupy souvisejí s atomy a jejich jádry.</p></div>
+  <div class="card"><h3>🌌 Vesmír</h3><p>Hvězdy i planety jsou tvořeny atomy. Ve hvězdách vznikají nové prvky.</p></div>
+  <div class="card"><h3>⚙️ Materiály</h3><p>Tvrdost, vodivost nebo magnetické vlastnosti látek souvisejí se stavbou atomů.</p></div>
+</div>
+</div>
+</section>
+
+<section>
+<div class="wrap">
+<h2>🏆 Závěrečný mini test</h2>
+<div class="card">
+  <p id="testQuestion"></p>
+  <div id="testChoices"></div>
+  <p id="testFeedback" class="feedback"></p>
+  <p class="score" id="score">Skóre: 0 / 0</p>
+  <button onclick="nextTest()">Další otázka</button>
+  <button class="secondary" onclick="resetTest()">Začít znovu</button>
+</div>
+</div>
+</section>
+
+<footer>
+© Mgr. Ivana Langweilová – ILang • Interaktivní výuková aplikace pro fyziku
+</footer>
+
+<script>
+const pairData = [
+  ["Proton","kladný, v jádře"],
+  ["Neutron","bez náboje, v jádře"],
+  ["Elektron","záporný, v obalu"]
+];
+const pairOptions = [
+  "kladný, v jádře",
+  "bez náboje, v jádře",
+  "záporný, v obalu"
+];
+function renderPairs(){
+  const box=document.getElementById("pairing");
+  box.innerHTML="";
+  pairData.forEach((item,i)=>{
+    box.innerHTML += `<div><strong>${item[0]}</strong></div><div><select id="pair${i}"><option value="">Vyber…</option>${pairOptions.map(x=>`<option>${x}</option>`).join("")}</select></div>`;
+  });
+}
+function checkPairs(){
+  let good=0;
+  pairData.forEach((item,i)=>{ if(document.getElementById("pair"+i).value===item[1]) good++; });
+  const f=document.getElementById("pairFeedback");
+  f.textContent=`Správně: ${good} z ${pairData.length}.`;
+  f.className="feedback "+(good===pairData.length?"ok":"bad");
+}
+
+const elements = {
+  H:{name:"Vodík", symbol:"H", p:1, n:0, e:1},
+  He:{name:"Helium", symbol:"He", p:2, n:2, e:2},
+  Li:{name:"Lithium", symbol:"Li", p:3, n:4, e:3},
+  C:{name:"Uhlík", symbol:"C", p:6, n:6, e:6},
+  O:{name:"Kyslík", symbol:"O", p:8, n:8, e:8},
+  Na:{name:"Sodík", symbol:"Na", p:11, n:12, e:11}
+};
+
+function updateTargetInfo(){
+  const key=document.getElementById("elementSelect").value;
+  const el=elements[key];
+  document.getElementById("targetInfo").innerHTML =
+    `Zkus sestavit <strong>${el.name}</strong> (${el.symbol}). Má mít <strong>${el.p} protonů</strong> a jako neutrální atom také <strong>${el.e} elektronů</strong>. Pro jednoduchost zde počítáme s <strong>${el.n} neutrony</strong>.`;
+}
+function fillHint(){
+  const key=document.getElementById("elementSelect").value;
+  const el=elements[key];
+  document.getElementById("protons").value=el.p;
+  document.getElementById("neutrons").value=el.n;
+  document.getElementById("electrons").value=el.e;
+  renderAtom();
+}
+function checkAtom(){
+  const key=document.getElementById("elementSelect").value;
+  const el=elements[key];
+  const p=Number(document.getElementById("protons").value);
+  const n=Number(document.getElementById("neutrons").value);
+  const e=Number(document.getElementById("electrons").value);
+  const f=document.getElementById("atomFeedback");
+
+  if(p===el.p && n===el.n && e===el.e){
+    f.textContent=`Výborně! Sestavila jsi správně atom ${el.name}.`;
+    f.className="feedback ok";
+  } else {
+    let msgs=[];
+    if(p!==el.p) msgs.push(`protonů má být ${el.p}`);
+    if(n!==el.n) msgs.push(`neutronů má být ${el.n}`);
+    if(e!==el.e) msgs.push(`elektronů má být ${el.e}`);
+    f.textContent=`Ještě ne úplně. U prvku ${el.name} platí: ${msgs.join(", ")}.`;
+    f.className="feedback bad";
+  }
+}
+
+function electronPositions(count){
+  const pos=[];
+  const ring1=Math.min(count,2);
+  const ring2=Math.max(0,Math.min(count-2,8));
+  for(let i=0;i<ring1;i++){
+    const angle=(360/ring1)*i - 90;
+    pos.push({ring:1, angle});
+  }
+  for(let i=0;i<ring2;i++){
+    const angle=(360/ring2)*i - 90;
+    pos.push({ring:2, angle});
+  }
+  return pos;
+}
+
+function renderAtom(){
+  const visual=document.getElementById("atomVisual");
+  [...visual.querySelectorAll(".electron")].forEach(x=>x.remove());
+
+  const p=Number(document.getElementById("protons").value||0);
+  const n=Number(document.getElementById("neutrons").value||0);
+  const e=Number(document.getElementById("electrons").value||0);
+
+  document.getElementById("nucleusLabel").innerHTML=`jádro<br>${p}p⁺, ${n}n⁰`;
+
+  const positions=electronPositions(e);
+  positions.forEach((item,idx)=>{
+    const div=document.createElement("div");
+    div.className="electron";
+    div.textContent="−";
+    const orbitRadius = item.ring===1 ? 60 : 100;
+    const center = 150;
+    const rad = item.angle*Math.PI/180;
+    const x=center + orbitRadius*Math.cos(rad) - 14;
+    const y=center + orbitRadius*Math.sin(rad) - 14;
+    div.style.left=x+"px";
+    div.style.top=y+"px";
+    visual.appendChild(div);
+  });
+}
+
+const mcQs = [
+  ["Kde se nachází proton?",["v jádře","v obalu","mimo atom","v kapalině"],0],
+  ["Jaký náboj má elektron?",["kladný","záporný","žádný","proměnný"],1],
+  ["Která částice nemá elektrický náboj?",["proton","elektron","neutron","ion"],2],
+  ["Co určuje, o který prvek se jedná?",["počet protonů","barva látky","teplota","objem"],0],
+  ["Kdy je atom elektricky neutrální?",["když má více elektronů","když má stejně protonů a elektronů","když nemá neutrony","když je zahřátý"],1],
+  ["Kde se pohybují elektrony?",["v jádře","v elektronovém obalu","v mrazáku","ve vakuu okolo Země"],1]
+];
+let mci=0;
+function showMc(){
+  const q=mcQs[mci];
+  document.getElementById("mcQuestion").innerHTML="<strong>"+q[0]+"</strong>";
+  const c=document.getElementById("mcChoices");
+  c.innerHTML="";
+  q[1].forEach((ans,i)=>c.innerHTML += `<button class="choice" onclick="answerMc(${i})">${ans}</button>`);
+  document.getElementById("mcFeedback").textContent="";
+}
+function answerMc(i){
+  const q=mcQs[mci], f=document.getElementById("mcFeedback");
+  f.textContent=i===q[2]?"Správně! ✅":"Zkus to ještě jednou. ❌";
+  f.className="feedback "+(i===q[2]?"ok":"bad");
+}
+function nextMc(){
+  mci=(mci+1)%mcQs.length;
+  showMc();
+}
+
+const errorQs = [
+  ["Elektron má kladný náboj.",["To je správně","To je špatně"],1,"Elektron má záporný náboj."],
+  ["Protony a neutrony jsou v jádře atomu.",["To je správně","To je špatně"],0,"Ano, protony i neutrony jsou v jádře."],
+  ["Počet protonů určuje chemický prvek.",["To je správně","To je špatně"],0,"Ano, podle počtu protonů poznáme prvek."],
+  ["Neutron se pohybuje v elektronovém obalu.",["To je správně","To je špatně"],1,"Neutron je v jádře atomu."],
+  ["Neutrální atom má stejně protonů a elektronů.",["To je správně","To je špatně"],0,"Ano, právě tehdy je atom neutrální."]
+];
+let eri=0;
+function showError(){
+  const q=errorQs[eri];
+  document.getElementById("errorQuestion").innerHTML="<strong>"+q[0]+"</strong>";
+  const c=document.getElementById("errorChoices");
+  c.innerHTML="";
+  q[1].forEach((ans,i)=>c.innerHTML += `<button class="choice" onclick="answerError(${i})">${ans}</button>`);
+  document.getElementById("errorFeedback").textContent="";
+}
+function answerError(i){
+  const q=errorQs[eri], f=document.getElementById("errorFeedback");
+  f.textContent=(i===q[2]?"Správně. ":"Ne. ")+q[3];
+  f.className="feedback "+(i===q[2]?"ok":"bad");
+}
+function nextError(){
+  eri=(eri+1)%errorQs.length;
+  showError();
+}
+
+const testQs = [
+  ["Z čeho se skládá jádro atomu?",["z protonů a neutronů","jen z elektronů","jen z protonů","z molekul"],0],
+  ["Jaký náboj má proton?",["záporný","kladný","žádný","není stálý"],1],
+  ["Jaký náboj má neutron?",["kladný","záporný","žádný","dvojitý"],2],
+  ["Kde najdeme elektrony?",["v jádře","v elektronovém obalu","v kapalině","jen v kovech"],1],
+  ["Co určuje počet protonů?",["barvu látky","chemický prvek","skupenství","teplotu varu"],1],
+  ["Kdy je atom neutrální?",["když má více protonů","když má stejně protonů a elektronů","když nemá neutrony","když je velký"],1],
+  ["Kolik protonů má kyslík v tomto procvičování?",["6","7","8","10"],2],
+  ["Která částice se podílí na elektrických jevech nejvíce?",["neutron","elektron","proton v jádře","molekula vody"],1],
+  ["Co je příkladem využití znalosti atomů?",["baterie a elektronika","jen vaření","jen sport","jen kreslení"],0],
+  ["Které tvrzení je správné?",["elektron je v jádře","neutron má záporný náboj","proton má kladný náboj","atom není tvořen částicemi"],2]
+];
+let ti=0, score=0, answered=0;
+function showTest(){
+  const q=testQs[ti];
+  document.getElementById("testQuestion").innerHTML=`<strong>Otázka ${answered+1}:</strong> ${q[0]}`;
+  const c=document.getElementById("testChoices");
+  c.innerHTML="";
+  q[1].forEach((ans,i)=>c.innerHTML += `<button class="choice" onclick="answerTest(${i})">${ans}</button>`);
+  const f=document.getElementById("testFeedback");
+  f.textContent="";
+}
+function answerTest(i){
+  const q=testQs[ti], f=document.getElementById("testFeedback");
+  if(f.dataset.done==="1") return;
+  answered++;
+  if(i===q[2]){
+    score++;
+    f.textContent="Správně! ✅";
+    f.className="feedback ok";
+  }else{
+    f.textContent=`Nesprávně. Správná odpověď: ${q[1][q[2]]}.`;
+    f.className="feedback bad";
+  }
+  f.dataset.done="1";
+  document.getElementById("score").textContent=`Skóre: ${score} / ${answered}`;
+}
+function nextTest(){
+  const f=document.getElementById("testFeedback");
+  if(f.dataset.done!=="1"){
+    f.textContent="Nejprve vyber odpověď.";
+    f.className="feedback bad";
+    return;
+  }
+  ti=(ti+1)%testQs.length;
+  f.dataset.done="0";
+  showTest();
+}
+function resetTest(){
+  ti=0; score=0; answered=0;
+  document.getElementById("score").textContent="Skóre: 0 / 0";
+  document.getElementById("testFeedback").dataset.done="0";
+  showTest();
+}
+
+renderPairs();
+updateTargetInfo();
+renderAtom();
+showMc();
+showError();
+resetTest();
+</script>
+</body>
+</html>
