@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Převody jednotek – ILang</title>
+<style>
+:root{--ink:#203040;--muted:#60717e;--line:#d9e5ec;--ok:#21875b;--bad:#b74949;--blue:#e8f4ff;--green:#eaf9ef;--yellow:#fff6c9;--pink:#fff0f3;--lav:#f1edff;--peach:#fff1e3}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);line-height:1.55;background:linear-gradient(135deg,#f5fbff,#fffdf3,#fff6f7)}
+header{padding:34px 18px;background:linear-gradient(135deg,#dff1ff,#fff2b9,#ffe9ed);border-bottom:1px solid var(--line)}
+.wrap{max-width:1180px;margin:auto}
+h1{margin:0 0 8px;font-size:clamp(30px,5vw,48px)}
+h2{margin-top:0}.lead{font-size:1.08rem;color:var(--muted);max-width:980px}
+section{padding:28px 18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+.card,.panel{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 8px 22px rgba(40,70,100,.07)}
+.grid .card:nth-child(6n+1){background:linear-gradient(145deg,var(--blue),#fff)}
+.grid .card:nth-child(6n+2){background:linear-gradient(145deg,var(--yellow),#fff)}
+.grid .card:nth-child(6n+3){background:linear-gradient(145deg,var(--green),#fff)}
+.grid .card:nth-child(6n+4){background:linear-gradient(145deg,var(--pink),#fff)}
+.notice{background:#fff4c4;border-left:6px solid #e0b72e;padding:16px;border-radius:12px}
+button,select,input{font:inherit}
+button{border:0;border-radius:12px;padding:11px 15px;margin:4px;cursor:pointer;color:white;font-weight:700;background:linear-gradient(135deg,#2f79cc,#e05c5c)}
+button.secondary{background:#778792}
+button.choice{display:block;width:100%;text-align:left;background:#edf4f8;color:var(--ink);border:1px solid var(--line);margin:8px 0}
+input,select{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:white}
+.feedback{font-weight:700;margin-top:10px}.ok{color:var(--ok)}.bad{color:var(--bad)}
+.converter-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;align-items:end}
+.result{margin-top:16px;padding:16px;border-radius:14px;background:#eef8ff;border:1px solid #cfe3f2}
+.result strong{font-size:1.4rem}
+.stairs{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;margin:18px 0}
+.step{min-width:82px;padding:12px 8px;text-align:center;border-radius:12px;background:white;border:2px solid var(--line);font-weight:700}
+.arrow{font-size:22px;color:#6b7d8c}
+.bigRule{text-align:center;padding:16px;border-radius:16px;font-weight:700}
+.lengthRule{background:#e7f4ff}.areaRule{background:#eaf8ef}.volumeRule{background:#fff0df}
+.tableWrap{overflow-x:auto}table{width:100%;border-collapse:collapse;background:white}th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left}th{background:#edf4fb}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}.tab.active{outline:3px solid rgba(47,121,204,.2)}
+.practiceBox{padding:16px;background:linear-gradient(145deg,#eef7ff,#fff8ea);border-radius:14px}
+.score{font-size:1.2rem;font-weight:700}
+footer{text-align:center;padding:30px;color:var(--muted)}
+@media(max-width:760px){.converter-grid{grid-template-columns:1fr}}
+
+.streakBox{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:12px 0}
+.stat{padding:10px 14px;border-radius:999px;background:#eef4f8;font-weight:700}
+.challenge{background:linear-gradient(145deg,#fff4c9,#ffeef1)}
+.timer{font-size:2rem;font-weight:800}
+.mover{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;padding:18px;background:#f7fafc;border-radius:16px}
+.mover .cell{width:48px;height:54px;border:2px solid #cbdbe5;border-radius:12px;background:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700}
+.mover .commaCell{font-size:34px;color:#d65353;font-weight:900}
+.pathBox{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}
+.pathNode{padding:10px 14px;border-radius:12px;background:#eef5fb;border:1px solid #cbdde9;font-weight:700}
+.badgeWin{display:inline-block;padding:8px 12px;border-radius:999px;background:#fff0b8;font-weight:800;margin-top:8px}
+
+</style>
+</head>
+<body>
+<header><div class="wrap"><div style="font-weight:700">🦉 ILang • Fyzika</div><h1>📏 Převody jednotek</h1><p class="lead">Procvič délku, obsah, objem, hmotnost, čas, rychlost, teplotu, hustotu, sílu, tlak, energii a výkon. Nauč se nejen výsledek, ale i postup převodu.</p></div></header>
+
+<section><div class="wrap"><div class="grid">
+<div class="card"><h2>🧠 Co se naučíš?</h2><p>Převádět jednotky a správně poznat, kdy násobíme nebo dělíme 10, 100, 1000 nebo jiným číslem.</p></div>
+<div class="card"><h2>🎯 Proč se to učíme?</h2><p>Jednotky používáme v běžném životě, ve fyzice, matematice, technice, při vaření, sportu, cestování i stavění.</p></div>
+<div class="card"><h2>🏠 K čemu ti to bude?</h2><p>Dokážeš převést metry na centimetry, litry na mililitry, hodiny na sekundy, km/h na m/s a mnoho dalšího.</p></div>
+</div></div></section>
+
+<section><div class="wrap"><div class="notice"><strong>💡 Nejdůležitější pravidlo:</strong> U délky je krok ×10, u obsahu ×100 a u objemu ×1000.</div></div></section>
+
+<section><div class="wrap"><h2>🪜 Převodní schody</h2><div class="grid">
+<div class="card"><h3>📏 Délka</h3><div class="bigRule lengthRule">Každý krok = ×10 nebo ÷10</div><div class="stairs"><div class="step">km</div><div class="arrow">↔</div><div class="step">m</div><div class="arrow">↔</div><div class="step">dm</div><div class="arrow">↔</div><div class="step">cm</div><div class="arrow">↔</div><div class="step">mm</div></div></div>
+<div class="card"><h3>⬜ Obsah</h3><div class="bigRule areaRule">Každý krok = ×100 nebo ÷100</div><div class="stairs"><div class="step">km²</div><div class="arrow">↔</div><div class="step">ha</div><div class="arrow">↔</div><div class="step">a</div><div class="arrow">↔</div><div class="step">m²</div><div class="arrow">↔</div><div class="step">dm²</div><div class="arrow">↔</div><div class="step">cm²</div></div></div>
+<div class="card"><h3>🧊 Objem</h3><div class="bigRule volumeRule">Každý krok = ×1000 nebo ÷1000</div><div class="stairs"><div class="step">m³</div><div class="arrow">↔</div><div class="step">dm³</div><div class="arrow">↔</div><div class="step">cm³</div><div class="arrow">↔</div><div class="step">mm³</div></div><p>1 dm³ = 1 l • 1 cm³ = 1 ml</p></div>
+</div></div></section>
+
+<section><div class="wrap"><h2>🧮 Interaktivní převodník</h2><div class="panel">
+<div class="converter-grid"><div><label><strong>Veličina</strong></label><select id="quantity"></select></div><div><label><strong>Z jednotky</strong></label><select id="fromUnit"></select></div><div><label><strong>Na jednotku</strong></label><select id="toUnit"></select></div></div><br>
+<div class="converter-grid"><div><label><strong>Hodnota</strong></label><input id="valueInput" value="1"></div><div style="grid-column:span 2"><button onclick="convertNow()">Převést</button><button class="secondary" onclick="swapUnits()">⇄ Prohodit jednotky</button></div></div>
+<div class="result" id="conversionResult"><strong>Výsledek se zobrazí zde.</strong></div>
+</div></div></section>
+
+<section><div class="wrap"><h2>📚 Přehled jednotek</h2><div class="tableWrap"><table>
+<tr><th>Veličina</th><th>Jednotky</th><th>Užitečné vztahy</th></tr>
+<tr><td>Délka</td><td>mm, cm, dm, m, km</td><td>1 m = 10 dm = 100 cm = 1000 mm</td></tr>
+<tr><td>Obsah</td><td>mm², cm², dm², m², a, ha, km²</td><td>1 m² = 100 dm² = 10 000 cm²; 1 ha = 10 000 m²</td></tr>
+<tr><td>Objem</td><td>mm³, cm³, dm³, m³, ml, cl, dl, l</td><td>1 dm³ = 1 l; 1 cm³ = 1 ml; 1 m³ = 1000 l</td></tr>
+<tr><td>Hmotnost</td><td>mg, g, dkg, kg, t</td><td>1 kg = 1000 g; 1 t = 1000 kg</td></tr>
+<tr><td>Čas</td><td>s, min, h, den</td><td>1 min = 60 s; 1 h = 60 min; 1 den = 24 h</td></tr>
+<tr><td>Rychlost</td><td>m/s, km/h</td><td>1 m/s = 3,6 km/h</td></tr>
+<tr><td>Teplota</td><td>°C, K, °F</td><td>K = °C + 273,15</td></tr>
+<tr><td>Hustota</td><td>kg/m³, g/cm³</td><td>1 g/cm³ = 1000 kg/m³</td></tr>
+<tr><td>Síla</td><td>mN, N, kN</td><td>1 kN = 1000 N</td></tr>
+<tr><td>Tlak</td><td>Pa, hPa, kPa, MPa</td><td>1 kPa = 1000 Pa</td></tr>
+<tr><td>Energie</td><td>J, kJ, MJ</td><td>1 kJ = 1000 J</td></tr>
+<tr><td>Výkon</td><td>W, kW, MW</td><td>1 kW = 1000 W</td></tr>
+</table></div></div></section>
+
+<section><div class="wrap"><h2>🎯 Trénink podle obtížnosti</h2><div class="panel">
+<div class="tabs"><button class="tab active" onclick="setDifficulty('easy',this)">Lehká</button><button class="tab" onclick="setDifficulty('medium',this)">Střední</button><button class="tab" onclick="setDifficulty('hard',this)">Těžší</button></div>
+<div class="practiceBox"><p id="practiceQ"></p><input id="practiceInput" placeholder="Napiš výsledek"><div style="margin-top:10px"><button onclick="checkPractice()">Zkontrolovat</button><button class="secondary" onclick="nextPractice()">Další příklad</button></div><p id="practiceFeedback" class="feedback"></p></div>
+</div></div></section>
+
+<section><div class="wrap"><h2>🔍 Najdi chybu</h2><div class="panel"><p id="errorQ"></p><div id="errorChoices"></div><p id="errorFeedback" class="feedback"></p><button class="secondary" onclick="nextError()">Další tvrzení</button></div></div></section>
+
+<section><div class="wrap"><h2>🧩 Přiřaď veličinu a jednotku</h2><div class="panel" id="matchBox"></div><p id="matchFeedback" class="feedback"></p><button onclick="checkMatch()">Zkontrolovat</button></div></section>
+
+
+<section><div class="wrap"><h2>🎞️ Animace desetinné čárky</h2><div class="panel">
+<p>Vyber, kolikrát se má číslo násobit nebo dělit deseti. Aplikace ti ukáže směr posunu.</p>
+<div class="converter-grid">
+<div><label><strong>Číslo</strong></label><input id="moveInput" value="2,5"></div>
+<div><label><strong>Operace</strong></label><select id="moveOp"><option value="10">× 10</option><option value="100">× 100</option><option value="1000">× 1000</option><option value="0.1">÷ 10</option><option value="0.01">÷ 100</option><option value="0.001">÷ 1000</option></select></div>
+<div><button onclick="showMove()">Ukázat posun</button></div>
+</div>
+<div class="mover" id="moveViz"></div>
+<p id="moveText" class="feedback"></p>
+</div></div></section>
+
+<section><div class="wrap"><h2>🛤️ Vyber správnou cestu</h2><div class="panel">
+<p id="pathQuestion"></p>
+<div id="pathChoices"></div>
+<p id="pathFeedback" class="feedback"></p>
+<button class="secondary" onclick="nextPath()">Další cesta</button>
+</div></div></section>
+
+<section><div class="wrap"><h2>🔥 Náhodný trénink</h2><div class="panel">
+<div class="streakBox">
+<span class="stat" id="randomScore">Body: 0</span>
+<span class="stat" id="randomStreak">Série: 0 🔥</span>
+<span class="stat" id="randomBest">Nejlepší série: 0</span>
+</div>
+<p id="randomQ"></p>
+<input id="randomInput" placeholder="Napiš výsledek">
+<div style="margin-top:10px"><button onclick="checkRandom()">Zkontrolovat</button><button class="secondary" onclick="newRandom()">Nový příklad</button></div>
+<p id="randomFeedback" class="feedback"></p>
+<div id="randomBadge"></div>
+</div></div></section>
+
+<section><div class="wrap"><h2>⏱️ Výzva na čas</h2><div class="panel challenge">
+<p>Zkus za 60 sekund vyřešit co nejvíc převodů.</p>
+<div class="streakBox"><span class="stat timer" id="timer">60 s</span><span class="stat" id="timeScore">Správně: 0</span></div>
+<p id="timeQ"><strong>Klikni na Start.</strong></p>
+<input id="timeInput" placeholder="Výsledek" disabled>
+<div style="margin-top:10px"><button id="startBtn" onclick="startChallenge()">Start</button><button onclick="submitTime()" id="timeCheck" disabled>Zkontrolovat</button></div>
+<p id="timeFeedback" class="feedback"></p>
+</div></div></section>
+
+<section><div class="wrap"><h2>🏆 Závěrečný mini test</h2><div class="panel"><p id="testQ"></p><div id="testChoices"></div><p id="testFeedback" class="feedback" data-done="0"></p><p class="score" id="score">Skóre: 0 / 0</p><button onclick="nextTest()">Další otázka</button><button class="secondary" onclick="resetTest()">Začít znovu</button></div></div></section>
+
+<footer>© Mgr. Ivana Langweilová – ILang • Interaktivní výuková aplikace</footer>
+
+<script>
+const quantities={
+"Délka":{"mm":.001,"cm":.01,"dm":.1,"m":1,"km":1000},
+"Obsah":{"mm²":1e-6,"cm²":1e-4,"dm²":.01,"m²":1,"a":100,"ha":10000,"km²":1e6},
+"Objem":{"mm³":1e-9,"cm³":1e-6,"ml":1e-6,"cl":1e-5,"dl":1e-4,"dm³":.001,"l":.001,"m³":1},
+"Hmotnost":{"mg":1e-6,"g":.001,"dkg":.01,"kg":1,"t":1000},
+"Čas":{"s":1,"min":60,"h":3600,"den":86400},
+"Rychlost":{"m/s":1,"km/h":1/3.6},
+"Hustota":{"kg/m³":1,"g/cm³":1000},
+"Síla":{"mN":.001,"N":1,"kN":1000},
+"Tlak":{"Pa":1,"hPa":100,"kPa":1000,"MPa":1e6},
+"Energie":{"J":1,"kJ":1000,"MJ":1e6},
+"Výkon":{"W":1,"kW":1000,"MW":1e6}
+};
+
+const qs=document.getElementById("quantity"),fu=document.getElementById("fromUnit"),tu=document.getElementById("toUnit");
+Object.keys(quantities).concat(["Teplota"]).forEach(q=>qs.innerHTML+=`<option>${q}</option>`);
+function fillUnits(){const q=qs.value;const list=q==="Teplota"?["°C","K","°F"]:Object.keys(quantities[q]);fu.innerHTML=list.map(x=>`<option>${x}</option>`).join("");tu.innerHTML=list.map(x=>`<option>${x}</option>`).join("");if(list.length>1)tu.selectedIndex=1}
+qs.onchange=fillUnits;fillUnits();
+
+function num(v){return Number(String(v).replace(/\s/g,"").replace(",","."))}
+function fmt(v){if(!Number.isFinite(v))return"";return String(Math.round((v+Number.EPSILON)*1e10)/1e10).replace(".",",")}
+function temp(v,f,t){let c=f==="°C"?v:f==="K"?v-273.15:(v-32)*5/9;return t==="°C"?c:t==="K"?c+273.15:c*9/5+32}
+function convertNow(){const q=qs.value,f=fu.value,t=tu.value,v=num(document.getElementById("valueInput").value),o=document.getElementById("conversionResult");if(!Number.isFinite(v)){o.innerHTML="<strong>Zadej platné číslo.</strong>";return}let r,txt;if(q==="Teplota"){r=temp(v,f,t);txt="U teploty nepoužíváme jednoduché násobení deseti."}else{r=v*quantities[q][f]/quantities[q][t];const factor=quantities[q][f]/quantities[q][t];txt="Převodový faktor: "+fmt(factor)}o.innerHTML=`<strong>${fmt(v)} ${f} = ${fmt(r)} ${t}</strong><br><span>${txt}</span>`}
+function swapUnits(){const a=fu.value;fu.value=tu.value;tu.value=a;convertNow()}
+
+const practice={
+easy:[["3 m","cm",300],["250 cm","m",2.5],["2 kg","g",2000],["2 h","min",120],["5 l","ml",5000]],
+medium:[["2,5 m","mm",2500],["0,75 km","m",750],["3 m²","cm²",30000],["72 km/h","m/s",20],["2,5 kN","N",2500]],
+hard:[["0,035 m²","cm²",350],["0,008 m³","l",8],["1,25 g/cm³","kg/m³",1250],["250 kPa","Pa",250000],["18 km/h","m/s",5]]
+};
+let diff="easy",pi=0;
+function setDifficulty(d,b){diff=d;pi=0;document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");showPractice()}
+function showPractice(){const q=practice[diff][pi];document.getElementById("practiceQ").innerHTML=`<strong>Převeď:</strong> ${q[0]} = ? ${q[1]}`;document.getElementById("practiceInput").value="";document.getElementById("practiceFeedback").textContent=""}
+function checkPractice(){const q=practice[diff][pi],v=num(document.getElementById("practiceInput").value),f=document.getElementById("practiceFeedback");if(Math.abs(v-q[2])<1e-9){f.textContent="Správně! ✅";f.className="feedback ok"}else{f.textContent=`Nesprávně. ❌ Správně: ${fmt(q[2])} ${q[1]}.`;f.className="feedback bad"}}
+function nextPractice(){pi=(pi+1)%practice[diff].length;showPractice()}
+
+const errors=[
+["3 m = 300 cm",true,"Ano, 1 m = 100 cm."],
+["3 m² = 300 cm²",false,"Správně je 3 m² = 30 000 cm²."],
+["2 dm³ = 2 l",true,"Ano, 1 dm³ = 1 l."],
+["1 kg = 100 g",false,"Správně je 1 kg = 1000 g."],
+["72 km/h = 20 m/s",true,"Ano, dělíme 3,6."],
+["1 g/cm³ = 100 kg/m³",false,"Správně je 1000 kg/m³."]
+];
+let ei=0;
+function showError(){const q=errors[ei];document.getElementById("errorQ").innerHTML="<strong>"+q[0]+"</strong>";document.getElementById("errorChoices").innerHTML='<button class="choice" onclick="answerError(true)">Správně</button><button class="choice" onclick="answerError(false)">Špatně</button>';document.getElementById("errorFeedback").textContent=""}
+function answerError(v){const q=errors[ei],f=document.getElementById("errorFeedback");f.textContent=(v===q[1]?"Správně! ✅ ":"Nesprávně. ❌ ")+q[2];f.className="feedback "+(v===q[1]?"ok":"bad")}
+function nextError(){ei=(ei+1)%errors.length;showError()}
+
+const match=[["Délka","m"],["Hmotnost","kg"],["Čas","s"],["Teplota","°C"],["Síla","N"],["Tlak","Pa"],["Energie","J"],["Výkon","W"]];
+const opts=["m","kg","s","°C","N","Pa","J","W"];
+function renderMatch(){const box=document.getElementById("matchBox");box.innerHTML="";match.forEach((x,i)=>box.innerHTML+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0"><strong>${x[0]}</strong><select id="m${i}"><option value="">Vyber…</option>${opts.map(o=>`<option>${o}</option>`).join("")}</select></div>`)}
+function checkMatch(){let g=0,r=[];match.forEach((x,i)=>{const v=document.getElementById("m"+i).value;if(v===x[1]){g++;r.push(`✅ ${x[0]} – ${x[1]}`)}else r.push(`❌ ${x[0]} – správně ${x[1]}`)});const f=document.getElementById("matchFeedback");f.innerHTML=`Správně ${g} z ${match.length}.<br>`+r.join("<br>");f.className="feedback "+(g===match.length?"ok":"bad")}
+
+const test=[
+["Kolik centimetrů je 2 m?",["20","200","2000"],1],
+["Kolik gramů je 1,5 kg?",["150","1500","15000"],1],
+["Kolik sekund jsou 2 minuty?",["20","120","200"],1],
+["Kolik cm² je 1 m²?",["100","1000","10000"],2],
+["Kolik litrů jsou 3 dm³?",["0,3","3","30"],1],
+["Kolik m/s je 36 km/h?",["10","36","100"],0],
+["Kolik Pa jsou 2 kPa?",["200","2000","20000"],1],
+["Kolik kg/m³ je 1 g/cm³?",["100","1000","10000"],1]
+];
+let ti=0,sc=0,ans=0;
+function showTest(){const q=test[ti];document.getElementById("testQ").innerHTML=`<strong>Otázka ${ans+1}:</strong> ${q[0]}`;document.getElementById("testChoices").innerHTML=q[1].map((x,i)=>`<button class="choice" onclick="answerTest(${i})">${x}</button>`).join("");document.getElementById("testFeedback").textContent=""}
+function answerTest(i){const q=test[ti],f=document.getElementById("testFeedback");if(f.dataset.done==="1")return;ans++;if(i===q[2]){sc++;f.textContent="Správně! ✅";f.className="feedback ok"}else{f.textContent="Nesprávně. ❌ Správně: "+q[1][q[2]];f.className="feedback bad"}f.dataset.done="1";document.getElementById("score").textContent=`Skóre: ${sc} / ${ans}`}
+function nextTest(){const f=document.getElementById("testFeedback");if(f.dataset.done!=="1"){f.textContent="Nejprve vyber odpověď.";return}ti=(ti+1)%test.length;f.dataset.done="0";showTest()}
+function resetTest(){ti=0;sc=0;ans=0;document.getElementById("score").textContent="Skóre: 0 / 0";document.getElementById("testFeedback").dataset.done="0";showTest()}
+
+
+/* ANIMACE ČÁRKY */
+function showMove(){
+  const raw=document.getElementById("moveInput").value.trim();
+  const v=num(raw),op=Number(document.getElementById("moveOp").value);
+  const viz=document.getElementById("moveViz"),txt=document.getElementById("moveText");
+  if(!Number.isFinite(v)){txt.textContent="Zadej platné číslo.";txt.className="feedback bad";return}
+  const result=v*op;
+  const places=op>=1?Math.round(Math.log10(op)):Math.round(Math.log10(1/op));
+  const direction=op>=1?"doprava":"doleva";
+  const shown=raw.replace(".",",");
+  viz.innerHTML=`<div class="pathNode">${shown}</div><div class="arrow">→</div><div class="pathNode">čárka o ${places} ${places===1?"místo":"místa"} ${direction}</div><div class="arrow">→</div><div class="pathNode">${fmt(result)}</div>`;
+  txt.textContent=`${shown} ${op>=1?"× "+op:"÷ "+(1/op)} = ${fmt(result)}`;
+  txt.className="feedback ok";
+}
+
+/* CESTA */
+const pathQs=[
+  {q:"Převádíš 2 m na cm. Která cesta je správná?",a:0,c:["m → dm → cm","m → km → cm","m → mm → km"],e:"m → dm → cm, tedy dva kroky po ×10."},
+  {q:"Převádíš 3 m² na cm². Která cesta je správná?",a:1,c:["m² → cm² jedním krokem ×10","m² → dm² → cm²","m² → km² → cm²"],e:"m² → dm² → cm², každý krok je ×100."},
+  {q:"Převádíš 4 dm³ na cm³. Která cesta je správná?",a:2,c:["dm³ → m³ → cm³","dm³ → mm³","dm³ → cm³"],e:"dm³ → cm³ je jeden krok, tedy ×1000."},
+  {q:"Převádíš 72 km/h na m/s. Co uděláš?",a:0,c:["Dělím 3,6","Násobím 3,6","Dělím 10"],e:"Při převodu km/h na m/s dělíme 3,6."}
+];
+let pathI=0;
+function showPath(){
+  const q=pathQs[pathI];
+  document.getElementById("pathQuestion").innerHTML="<strong>"+q.q+"</strong>";
+  document.getElementById("pathChoices").innerHTML=q.c.map((x,i)=>`<button class="choice" onclick="answerPath(${i})">${x}</button>`).join("");
+  document.getElementById("pathFeedback").textContent="";
+}
+function answerPath(i){
+  const q=pathQs[pathI],f=document.getElementById("pathFeedback");
+  if(i===q.a){f.textContent="Správně! ✅ "+q.e;f.className="feedback ok"}
+  else{f.textContent="Nesprávně. ❌ "+q.e;f.className="feedback bad"}
+}
+function nextPath(){pathI=(pathI+1)%pathQs.length;showPath()}
+
+/* NÁHODNÝ TRÉNINK */
+const rndTemplates=[
+  {from:"m",to:"cm",factor:100,min:1,max:9},
+  {from:"cm",to:"m",factor:.01,min:10,max:900},
+  {from:"kg",to:"g",factor:1000,min:1,max:9},
+  {from:"g",to:"kg",factor:.001,min:100,max:9000},
+  {from:"l",to:"ml",factor:1000,min:1,max:9},
+  {from:"min",to:"s",factor:60,min:1,max:10},
+  {from:"km/h",to:"m/s",factor:1/3.6,choices:[18,36,54,72,90]},
+  {from:"kN",to:"N",factor:1000,min:1,max:8},
+  {from:"kPa",to:"Pa",factor:1000,min:1,max:20}
+];
+let rndCurrent=null,rndScore=0,rndStreak=0,rndBest=0;
+function makeRnd(){
+  const t=rndTemplates[Math.floor(Math.random()*rndTemplates.length)];
+  const v=t.choices?t.choices[Math.floor(Math.random()*t.choices.length)]:Math.floor(Math.random()*(t.max-t.min+1))+t.min;
+  return {text:`${fmt(v)} ${t.from} = ? ${t.to}`,answer:v*t.factor,to:t.to};
+}
+function newRandom(){
+  rndCurrent=makeRnd();
+  document.getElementById("randomQ").innerHTML="<strong>Převeď:</strong> "+rndCurrent.text;
+  document.getElementById("randomInput").value="";
+  document.getElementById("randomFeedback").textContent="";
+}
+function checkRandom(){
+  const v=num(document.getElementById("randomInput").value),f=document.getElementById("randomFeedback");
+  if(!Number.isFinite(v)){f.textContent="Zadej číslo.";f.className="feedback bad";return}
+  if(Math.abs(v-rndCurrent.answer)<1e-9){
+    rndScore++;rndStreak++;rndBest=Math.max(rndBest,rndStreak);
+    f.textContent="Správně! ✅";f.className="feedback ok";
+    if(rndStreak===5)document.getElementById("randomBadge").innerHTML='<span class="badgeWin">🏅 Mistr převodů – 5 správně za sebou!</span>';
+  }else{
+    rndStreak=0;
+    f.textContent=`Nesprávně. ❌ Správně: ${fmt(rndCurrent.answer)} ${rndCurrent.to}.`;f.className="feedback bad";
+  }
+  document.getElementById("randomScore").textContent="Body: "+rndScore;
+  document.getElementById("randomStreak").textContent="Série: "+rndStreak+" 🔥";
+  document.getElementById("randomBest").textContent="Nejlepší série: "+rndBest;
+}
+
+/* ČASOVÁ VÝZVA */
+let timeLeft=60,timePoints=0,timeTimer=null,timeCurrent=null,timeRunning=false;
+function newTimeQ(){
+  timeCurrent=makeRnd();
+  document.getElementById("timeQ").innerHTML="<strong>"+timeCurrent.text+"</strong>";
+  document.getElementById("timeInput").value="";
+}
+function startChallenge(){
+  if(timeTimer)clearInterval(timeTimer);
+  timeLeft=60;timePoints=0;timeRunning=true;
+  document.getElementById("timer").textContent="60 s";
+  document.getElementById("timeScore").textContent="Správně: 0";
+  document.getElementById("timeInput").disabled=false;
+  document.getElementById("timeCheck").disabled=false;
+  document.getElementById("startBtn").disabled=true;
+  document.getElementById("timeFeedback").textContent="";
+  newTimeQ();
+  timeTimer=setInterval(()=>{
+    timeLeft--;
+    document.getElementById("timer").textContent=timeLeft+" s";
+    if(timeLeft<=0){
+      clearInterval(timeTimer);timeTimer=null;timeRunning=false;
+      document.getElementById("timeInput").disabled=true;
+      document.getElementById("timeCheck").disabled=true;
+      document.getElementById("startBtn").disabled=false;
+      document.getElementById("timeQ").innerHTML=`<strong>Konec! Správně: ${timePoints}.</strong>`;
+      document.getElementById("timeFeedback").textContent=timePoints>=8?"Výborně! 🏆":timePoints>=5?"Moc pěkné! 👏":"Zkus to ještě jednou 🙂";
+    }
+  },1000);
+}
+function submitTime(){
+  if(!timeRunning)return;
+  const v=num(document.getElementById("timeInput").value);
+  if(Math.abs(v-timeCurrent.answer)<1e-9){timePoints++;document.getElementById("timeScore").textContent="Správně: "+timePoints;document.getElementById("timeFeedback").textContent="✅";document.getElementById("timeFeedback").className="feedback ok"}
+  else{document.getElementById("timeFeedback").textContent=`❌ ${fmt(timeCurrent.answer)} ${timeCurrent.to}`;document.getElementById("timeFeedback").className="feedback bad"}
+  newTimeQ();
+}
+
+showPractice();showError();renderMatch();resetTest();convertNow();showPath();newRandom();showMove();
+</script>
+</body>
+</html>
